@@ -1,131 +1,158 @@
 # fibx
 
-A command-line tool for EVM token operations on **Base**, powered by [Fibrous Finance](https://fibrous.finance) and [Privy](https://privy.io) server-side wallets.
+A command-line tool for specialized DeFi operations on **Base**, powered by [Fibrous Finance](https://fibrous.finance) aggregation and [Privy](https://privy.io) Server Wallets.
 
 ## Features
 
-- **Privy email OTP authentication** with P-256 authorization keys and server-side wallet creation
-- **ETH & USDC balance** queries via Base RPC
-- **USDC transfers** with encoded ERC-20 transactions
-- **Token swaps** through the Fibrous Finance aggregator (best-route, auto-approval)
-- **JSON output mode** for scripting and automation (`--json`)
+- **Privy Server Wallets**: Uses "Agentic" server-side wallets (ownerless) for seamless, automated signing without user interaction.
+- **ETH & Token Transfers**: Send ETH or any ERC-20 token with a simple command.
+- **Fibrous Aggregation**: Execute token swaps with optimal routing and auto-slippage protection.
+- **Automated Auth Flow**: One-time email OTP login provisions a persistent server wallet linked to your user profile.
+- **JSON Output**: All commands support `--json` for easy integration into scripts and pipelines.
 
 ## Requirements
 
-- Node.js ≥ 18
+- Node.js ≥ 20
 - pnpm
-- Privy account ([dashboard.privy.io](https://dashboard.privy.io)) with App ID and App Secret
+- Privy App ID and Secret (from [dashboard.privy.io](https://dashboard.privy.io))
 
 ## Quick Start
 
+### 1. Install Dependencies
+
 ```bash
-# 1. Install dependencies
 pnpm install
+```
 
-# 2. Configure environment
-cp .env.example .env   # fill in PRIVY_APP_ID and PRIVY_APP_SECRET
+### 2. Configure Environment
 
-# 3. Authenticate — sends a one-time code to your email
+Copy the example environment file and add your Privy credentials:
+
+```bash
+cp .env.example .env
+```
+
+Edit `.env`:
+
+```env
+PRIVY_APP_ID=your_app_id
+PRIVY_APP_SECRET=your_app_secret
+```
+
+### 3. Authenticate & Provision Wallet
+
+This two-step process links your email to a server-side wallet.
+
+**Step 1: Request OTP**
+
+```bash
 pnpm dev auth login <email>
+# Example:
+pnpm dev auth login user@example.com
+```
 
-# 4. Verify — creates a wallet and outputs the authorization private key
+**Step 2: Verify & Create Session**
+
+```bash
 pnpm dev auth verify <email> <code>
+# Example:
+pnpm dev auth verify user@example.com 123456
+```
 
-# 5. Save the printed authorizationPrivateKey as PRIVY_AUTHORIZATION_KEY in .env
+_Successfully verifying will create a local session file and provision a Server Wallet if one doesn't exist._
 
-# 6. You're ready!
+### 4. Check Status
+
+Verify that you are authenticated and the API is healthy:
+
+```bash
+pnpm dev status
+```
+
+## Usage
+
+### Check Balance
+
+View your ETH and USDC balances on Base:
+
+```bash
 pnpm dev balance
 ```
 
-## Environment Variables
+### Send Tokens
 
-| Variable                  | Description                                                  |
-| ------------------------- | ------------------------------------------------------------ |
-| `PRIVY_APP_ID`            | Privy application ID                                         |
-| `PRIVY_APP_SECRET`        | Privy application secret                                     |
-| `PRIVY_AUTHORIZATION_KEY` | P-256 private key for wallet signing (generated during auth) |
+Transfer ETH or ERC-20 tokens to another address.
 
-## Commands
+**Send ETH (Default):**
 
-| Command                           | Description                     |
-| --------------------------------- | ------------------------------- |
-| `fibx auth login <email>`         | Send OTP to email               |
-| `fibx auth verify <email> <code>` | Verify OTP, create wallet       |
-| `fibx status`                     | Check auth & Fibrous API health |
-| `fibx address`                    | Show wallet address             |
-| `fibx balance`                    | Show ETH and USDC balances      |
-| `fibx send <amount> <recipient>`  | Send USDC to a 0x address       |
-| `fibx trade <amount> <from> <to>` | Swap tokens via Fibrous         |
-
-### Global Options
-
-| Flag                     | Description                                   |
-| ------------------------ | --------------------------------------------- |
-| `--json`                 | Output as JSON (useful for scripting)         |
-| `-s, --slippage <value>` | Slippage tolerance (trade only, default: 0.5) |
-
-## Authentication Flow
-
+```bash
+pnpm dev send 0.001 0xRecipientAddress
 ```
-1.  fibx auth login user@example.com
-    → Sends a 6-digit OTP to the provided email via Privy
 
-2.  fibx auth verify user@example.com 123456
-    → Verifies the OTP
-    → Generates a P-256 authorization key pair
-    → Creates a server-side Privy wallet owned by the public key
-    → Prints the authorization private key (save it — it won't be shown again)
+**Send ERC-20 (e.g., USDC):**
 
-3.  Set PRIVY_AUTHORIZATION_KEY=<key> in your .env file
-    → Required for signing transactions (send, trade)
+```bash
+pnpm dev send 10 0xRecipientAddress USDC
 ```
+
+### Swap Tokens
+
+Swap tokens using Fibrous Finance's aggregator.
+
+```bash
+pnpm dev trade <amount> <from_token> <to_token>
+```
+
+**Examples:**
+
+```bash
+# Swap 0.0001 ETH to USDC
+pnpm dev trade 0.0001 ETH USDC
+
+# Swap 20 USDC to DAI
+pnpm dev trade 20 USDC DAI
+```
+
+**Options:**
+
+- `--slippage <number>`: Set slippage tolerance (default: 0.5%)
+- `--json`: Output result as JSON
+
+### View Wallet Address
+
+Print your connected server wallet address:
+
+```bash
+pnpm dev address
+```
+
+# Architecture
+
+This CLI uses a **Server Wallet** architecture:
+
+1.  **Privy**: Manages the embedded wallets. We use "Ownerless" wallets (Agents) that are controlled via the Privy App Secret, allowing the CLI to sign transactions programmatically without requiring a user-side browser or JWT.
+2.  **Viem**: Handles all blockchain interactions (RPC calls, transaction signing) using a custom Privy-backed account.
+3.  **Fibrous**: Provides the routing and calldata for optimal token swaps on Base.
 
 ## Project Structure
 
 ```
 src/
-├── cli.ts               Entry point & Commander setup
-├── commands/             CLI command handlers
-│   ├── auth-login.ts     Email OTP initiation
-│   ├── auth-verify.ts    OTP verification & wallet creation
-│   ├── address.ts        Display wallet address
-│   ├── balance.ts        ETH & USDC balances
-│   ├── send.ts           USDC transfers
-│   ├── status.ts         Auth & API health check
-│   └── trade.ts          Token swaps via Fibrous
-├── chain/                On-chain interaction layer
-│   ├── viem.ts           Public & wallet client setup
-│   └── erc20.ts          ERC-20 ABI helpers
-├── wallet/               Privy wallet management
-│   ├── privy.ts          Privy client & wallet creation
-│   ├── session.ts        Local session persistence
-│   └── policy.ts         Spending policy (stub)
-├── fibrous/              Fibrous Finance API
-│   ├── health.ts         Health check
-│   ├── route.ts          Route & calldata fetching
-│   └── tokens.ts         Token resolution & caching
-├── format/
-│   └── output.ts         Chalk/Ora formatting & JSON mode
-└── utils/
-    ├── config.ts          Constants & paths
-    ├── errors.ts          Error codes & FibxError class
-    ├── validation.ts      Zod-based input validation
-    ├── parseAmount.ts     Amount parsing & formatting
-    └── cache.ts           File-based TTL cache
+├── cli.ts               # Entry point & Command definitions
+├── commands/            # Command implementation logic
+│   ├── auth-login.ts    # Step 1: Request OTP
+│   ├── auth-verify.ts   # Step 2: Verify & Provision Wallet
+│   ├── trade.ts         # Swap logic via Fibrous
+│   ├── send.ts          # ETH/ERC20 transfer logic
+│   └── ...
+├── chain/               # Blockchain layer
+│   └── viem.ts          # Viem client & Custom Privy Account
+├── wallet/              # Wallet management
+│   ├── privy.ts         # Privy SDK integration (Server Wallets)
+│   └── session.ts       # Local session management
+├── fibrous/             # Fibrous API integration
+└── utils/               # Config, validation, and helpers
 ```
-
-## Scripts
-
-| Script              | Description             |
-| ------------------- | ----------------------- |
-| `pnpm dev`          | Run with tsx (dev mode) |
-| `pnpm build`        | Compile TypeScript      |
-| `pnpm start`        | Run compiled output     |
-| `pnpm typecheck`    | Type-check without emit |
-| `pnpm lint`         | Run ESLint              |
-| `pnpm lint:fix`     | Auto-fix lint issues    |
-| `pnpm format`       | Format with Prettier    |
-| `pnpm format:check` | Check formatting        |
 
 ## License
 

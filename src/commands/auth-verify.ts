@@ -1,7 +1,16 @@
-import { generateP256KeyPair } from "@privy-io/node";
-import { getPrivyClient, createAgentWallet } from "../wallet/privy.js";
+import {
+	getPrivyClient,
+	createAgentWallet,
+	findExistingWallet,
+	saveWalletIdToUser,
+} from "../wallet/privy.js";
 import { saveSession } from "../wallet/session.js";
 import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+
+interface PrivyAuthResponse {
+	user: { id: string };
+	privy_access_token: string;
+}
 
 export async function authVerifyCommand(
 	email: string,
@@ -11,7 +20,7 @@ export async function authVerifyCommand(
 	try {
 		const privy = getPrivyClient();
 
-		const userId = await withSpinner(
+		const { userId, userToken } = await withSpinner(
 			"Verifying OTP...",
 			async () => {
 				const appId = process.env.PRIVY_APP_ID!;
@@ -33,28 +42,50 @@ export async function authVerifyCommand(
 					throw new Error(`OTP verify failed (${res.status}): ${body}`);
 				}
 
-				const data = (await res.json()) as { user: { id: string } };
-				return data.user.id;
+				const data = (await res.json()) as PrivyAuthResponse;
+				// Return access token (privy_access_token) for session
+				return { userId: data.user.id, userToken: data.privy_access_token };
 			},
 			opts
 		);
 
-		// Generate P-256 authorization key pair BEFORE wallet creation
-		// generateP256KeyPair() returns keys in base64 DER format, ready for Privy API
-		const { privateKey: authorizationPrivateKey, publicKey: authorizationPublicKey } =
-			await generateP256KeyPair();
-
-		const wallet = await withSpinner(
-			"Creating wallet...",
-			async () => createAgentWallet(privy, authorizationPublicKey),
+		// Check if user already has a wallet (checks server wallet metadata first)
+		const existingWallet = await withSpinner(
+			"Checking for existing wallet...",
+			async () => findExistingWallet(privy, email),
 			opts
 		);
+
+		let wallet: { id: string; address: string };
+		let isExisting: boolean;
+
+		if (existingWallet) {
+			// Reuse existing wallet
+			wallet = existingWallet;
+			isExisting = true;
+		} else {
+			// Create new SERVER wallet (no owner) for the user
+			wallet = await withSpinner(
+				"Creating server wallet...",
+				async () => createAgentWallet(privy), // No owner argument = Server Wallet
+				opts
+			);
+
+			// Persist the server wallet ID to the user's metadata
+			await withSpinner(
+				"Linking wallet to user...",
+				async () => saveWalletIdToUser(privy, userId, wallet.id),
+				opts
+			);
+
+			isExisting = false;
+		}
 
 		await saveSession({
 			userId,
 			walletId: wallet.id,
 			walletAddress: wallet.address as `0x${string}`,
-			authorizationPublicKey,
+			userJwt: userToken,
 			createdAt: new Date().toISOString(),
 		});
 
@@ -62,9 +93,9 @@ export async function authVerifyCommand(
 			{
 				walletAddress: wallet.address,
 				walletId: wallet.id,
-				authorizationPrivateKey,
-				message:
-					"Save the authorizationPrivateKey above as PRIVY_AUTHORIZATION_KEY in your .env file.",
+				message: isExisting
+					? "Existing wallet found and connected. You're ready to go!"
+					: "New wallet created and session saved. You're ready to go!",
 			},
 			opts
 		);

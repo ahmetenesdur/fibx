@@ -2,10 +2,11 @@ import type { Address } from "viem";
 import { requireSession } from "../wallet/session.js";
 import { getPrivyClient } from "../wallet/privy.js";
 import { getWalletClient } from "../chain/viem.js";
+import { getChainConfig } from "../chain/chains.js";
 import { getAllowance, encodeApprove } from "../chain/erc20.js";
 import { resolveToken } from "../fibrous/tokens.js";
-import { getRouteAndCallData, type RouteAndCallDataResponse } from "../fibrous/route.js";
-import { NATIVE_ETH_ADDRESS, DEFAULT_SLIPPAGE } from "../utils/config.js";
+import { getRouteAndCallData, encodeSwapCalldata } from "../fibrous/route.js";
+import { ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../utils/config.js";
 import { validateAmount } from "../utils/validation.js";
 import { parseAmount, formatAmount } from "../utils/parseAmount.js";
 import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
@@ -23,6 +24,7 @@ export async function tradeCommand(
 	try {
 		validateAmount(amount);
 
+		const chain = getChainConfig(ACTIVE_NETWORK);
 		const session = requireSession();
 		const privy = getPrivyClient();
 		const wallet = session.walletAddress as Address;
@@ -34,7 +36,8 @@ export async function tradeCommand(
 		);
 
 		const amountBaseUnits = parseAmount(amount, tokenIn.decimals);
-		const isNativeInput = tokenIn.address.toLowerCase() === NATIVE_ETH_ADDRESS.toLowerCase();
+		const isNativeInput =
+			tokenIn.address.toLowerCase() === chain.nativeTokenAddress.toLowerCase();
 
 		const routeData = await withSpinner(
 			"Finding best route...",
@@ -53,7 +56,6 @@ export async function tradeCommand(
 		const routerAddress = routeData.router_address as Address;
 		const walletClient = getWalletClient(privy, session);
 
-		// Approve ERC20 spend if needed (skip for native ETH)
 		if (!isNativeInput) {
 			const currentAllowance = await getAllowance(
 				tokenIn.address as Address,
@@ -100,16 +102,11 @@ export async function tradeCommand(
 				tokenIn: tokenIn.symbol,
 				tokenOut: tokenOut.symbol,
 				router: routerAddress,
-				chain: "base",
+				chain: chain.name,
 			},
 			opts
 		);
 	} catch (error) {
 		outputError(error, opts);
 	}
-}
-
-// TODO: Use pre-encoded calldata hex from Fibrous V2 API directly
-function encodeSwapCalldata(calldata: RouteAndCallDataResponse["calldata"]): `0x${string}` {
-	return `0x${Buffer.from(JSON.stringify(calldata)).toString("hex")}` as `0x${string}`;
 }

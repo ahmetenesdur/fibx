@@ -1,4 +1,5 @@
-import { FIBROUS_BASE_URL, FIBROUS_NETWORK } from "../utils/config.js";
+import { FIBROUS_GRAPH_URL, ACTIVE_NETWORK } from "../utils/config.js";
+import { getChainConfig } from "../chain/chains.js";
 import { readCache, writeCache } from "../utils/cache.js";
 import { ErrorCode, FibxError } from "../utils/errors.js";
 
@@ -11,14 +12,15 @@ export interface Token {
 
 export type TokenMap = Record<string, Token>;
 
-const CACHE_KEY = `tokens-${FIBROUS_NETWORK}`;
+const chain = getChainConfig(ACTIVE_NETWORK);
+const CACHE_KEY = `tokens-${chain.fibrousNetwork}`;
 
 export async function getTokens(): Promise<TokenMap> {
 	const cached = readCache<TokenMap>(CACHE_KEY);
 	if (cached) return cached;
 
 	try {
-		const res = await fetch(`${FIBROUS_BASE_URL}/${FIBROUS_NETWORK}/tokens`);
+		const res = await fetch(`${FIBROUS_GRAPH_URL}/${chain.fibrousNetwork}/tokens`);
 		if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
 		const data = (await res.json()) as TokenMap;
@@ -46,7 +48,7 @@ export async function resolveToken(symbolOrAddress: string): Promise<Token> {
 	if (!token) {
 		throw new FibxError(
 			ErrorCode.TOKEN_NOT_SUPPORTED,
-			`Token "${symbolOrAddress}" not found on ${FIBROUS_NETWORK}`
+			`Token "${symbolOrAddress}" not found on ${chain.name}`
 		);
 	}
 

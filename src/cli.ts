@@ -8,12 +8,13 @@ import { addressCommand } from "./commands/address.js";
 import { balanceCommand } from "./commands/balance.js";
 import { sendCommand } from "./commands/send.js";
 import { tradeCommand } from "./commands/trade.js";
+import { walletsCommand } from "./commands/wallets.js";
 
 const program = new Command();
 
 program
 	.name("fibx")
-	.description("Fibrous DeFi CLI for Base — wallet, transfer, swap")
+	.description("Fibrous DeFi CLI — wallet, transfer, swap")
 	.version("0.1.0")
 	.option("--json", "Output results as JSON", false);
 
@@ -45,6 +46,13 @@ program
 	});
 
 program
+	.command("wallets")
+	.description("List wallets linked to a user email")
+	.argument("<email>", "User email address")
+	.option("-j, --json", "Output as JSON")
+	.action(walletsCommand);
+
+program
 	.command("address")
 	.description("Show active wallet address")
 	.action(async (_opts, cmd) => {
@@ -62,12 +70,13 @@ program
 
 program
 	.command("send")
-	.description("Send USDC to a recipient")
-	.argument("<amount>", "Amount of USDC to send")
+	.description("Send tokens (ETH, USDC, etc.)")
+	.argument("<amount>", "Amount to send")
 	.argument("<recipient>", "Recipient address (0x...)")
-	.action(async (amount, recipient, _opts, cmd) => {
+	.argument("[token]", "Token symbol or address", "ETH")
+	.action(async (amount, recipient, token, _opts, cmd) => {
 		const globalOpts = cmd.parent!.opts();
-		await sendCommand(amount, recipient, { json: globalOpts.json });
+		await sendCommand(amount, recipient, token, { json: globalOpts.json });
 	});
 
 program

@@ -8,7 +8,7 @@ const sessionSchema = z.object({
 	userId: z.string().optional(),
 	walletId: z.string(),
 	walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
-	authorizationPublicKey: z.string(),
+	userJwt: z.string().optional(),
 	createdAt: z.string(),
 });
 

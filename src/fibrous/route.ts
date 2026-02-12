@@ -1,4 +1,7 @@
-import { FIBROUS_BASE_URL, FIBROUS_NETWORK, DEFAULT_SLIPPAGE } from "../utils/config.js";
+import type { Address } from "viem";
+import { encodeFunctionData } from "viem";
+import { FIBROUS_BASE_URL, ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../utils/config.js";
+import { getChainConfig } from "../chain/chains.js";
 import { ErrorCode, FibxError } from "../utils/errors.js";
 
 export interface RouteToken {
@@ -14,6 +17,8 @@ export interface SwapParameter {
 	rate: string;
 	protocol_id: string;
 	pool_address: string;
+	swap_type: number;
+	extra_data: string;
 }
 
 export interface RouteAndCallDataResponse {
@@ -32,6 +37,7 @@ export interface RouteAndCallDataResponse {
 			amount_out: string;
 			min_received: string;
 			destination: string;
+			swap_type: number;
 		};
 		swap_parameters: SwapParameter[];
 	};
@@ -39,7 +45,7 @@ export interface RouteAndCallDataResponse {
 }
 
 export interface RouteParams {
-	amount: string; // Base units (wei etc.)
+	amount: string;
 	tokenInAddress: string;
 	tokenOutAddress: string;
 	slippage?: number;
@@ -47,9 +53,10 @@ export interface RouteParams {
 }
 
 export async function getRouteAndCallData(params: RouteParams): Promise<RouteAndCallDataResponse> {
+	const chain = getChainConfig(ACTIVE_NETWORK);
 	const slippage = params.slippage ?? DEFAULT_SLIPPAGE;
 
-	const url = new URL(`${FIBROUS_BASE_URL}/${FIBROUS_NETWORK}/v2/routeAndCallData`);
+	const url = new URL(`${FIBROUS_BASE_URL}/${chain.fibrousNetwork}/v2/routeAndCallData`);
 	url.searchParams.set("amount", params.amount);
 	url.searchParams.set("tokenInAddress", params.tokenInAddress);
 	url.searchParams.set("tokenOutAddress", params.tokenOutAddress);
@@ -78,4 +85,34 @@ export async function getRouteAndCallData(params: RouteParams): Promise<RouteAnd
 			`Route fetch failed: ${error instanceof Error ? error.message : String(error)}`
 		);
 	}
+}
+
+export function encodeSwapCalldata(calldata: RouteAndCallDataResponse["calldata"]): `0x${string}` {
+	const chain = getChainConfig(ACTIVE_NETWORK);
+	const { route, swap_parameters } = calldata;
+
+	return encodeFunctionData({
+		abi: chain.routerAbi,
+		functionName: "swap",
+		args: [
+			{
+				token_in: route.token_in as Address,
+				token_out: route.token_out as Address,
+				amount_in: BigInt(route.amount_in),
+				amount_out: BigInt(route.amount_out),
+				min_received: BigInt(route.min_received),
+				destination: route.destination as Address,
+				swap_type: route.swap_type,
+			},
+			swap_parameters.map((sp) => ({
+				token_in: sp.token_in as Address,
+				token_out: sp.token_out as Address,
+				rate: Number(sp.rate),
+				protocol_id: Number(sp.protocol_id),
+				pool_address: sp.pool_address as Address,
+				swap_type: sp.swap_type,
+				extra_data: (sp.extra_data ?? "0x") as `0x${string}`,
+			})),
+		],
+	});
 }
