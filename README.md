@@ -2,6 +2,8 @@
 
 A command-line tool for specialized DeFi operations on **Base**, powered by [Fibrous Finance](https://fibrous.finance) aggregation and [Privy](https://privy.io) Server Wallets.
 
+[![npm version](https://badge.fury.io/js/fibx.svg)](https://badge.fury.io/js/fibx)
+
 ## Features
 
 - **Privy Server Wallets**: Uses "Agentic" server-side wallets (ownerless) for seamless, automated signing without user interaction.
@@ -18,25 +20,28 @@ A command-line tool for specialized DeFi operations on **Base**, powered by [Fib
 
 ## Quick Start
 
-### 1. Install Dependencies
+### 1. Installation
+
+You can use `fibx` without installation via `npx`, or install it globally.
+
+**Option A: No Installation (Recommended for Agents)**
 
 ```bash
-pnpm install
+npx fibx <command>
 ```
 
-### 2. Configure Environment
-
-Copy the example environment file and add your Privy credentials:
+**Option B: Global Install**
 
 ```bash
-cp .env.example .env
+npm install -g fibx
+fibx <command>
 ```
 
-Edit `.env`:
+Set your Privy credentials as environment variables:
 
-```env
-PRIVY_APP_ID=your_app_id
-PRIVY_APP_SECRET=your_app_secret
+```bash
+export PRIVY_APP_ID="your_app_id"
+export PRIVY_APP_SECRET="your_app_secret"
 ```
 
 ### 3. Authenticate & Provision Wallet
@@ -46,17 +51,17 @@ This two-step process links your email to a server-side wallet.
 **Step 1: Request OTP**
 
 ```bash
-pnpm dev auth login <email>
+npx fibx auth login <email>
 # Example:
-pnpm dev auth login user@example.com
+npx fibx auth login user@example.com
 ```
 
 **Step 2: Verify & Create Session**
 
 ```bash
-pnpm dev auth verify <email> <code>
+npx fibx auth verify <email> <code>
 # Example:
-pnpm dev auth verify user@example.com 123456
+npx fibx auth verify user@example.com 123456
 ```
 
 _Successfully verifying will create a local session file and provision a Server Wallet if one doesn't exist._
@@ -66,7 +71,7 @@ _Successfully verifying will create a local session file and provision a Server 
 Verify that you are authenticated and the API is healthy:
 
 ```bash
-pnpm dev status
+npx fibx status
 ```
 
 ## Usage
@@ -76,7 +81,7 @@ pnpm dev status
 View your ETH and USDC balances on Base:
 
 ```bash
-pnpm dev balance
+npx fibx balance
 ```
 
 ### Send Tokens
@@ -86,13 +91,13 @@ Transfer ETH or ERC-20 tokens to another address.
 **Send ETH (Default):**
 
 ```bash
-pnpm dev send 0.001 0xRecipientAddress
+npx fibx send 0.001 0xRecipientAddress
 ```
 
 **Send ERC-20 (e.g., USDC):**
 
 ```bash
-pnpm dev send 10 0xRecipientAddress USDC
+npx fibx send 10 0xRecipientAddress USDC
 ```
 
 ### Swap Tokens
@@ -100,17 +105,17 @@ pnpm dev send 10 0xRecipientAddress USDC
 Swap tokens using Fibrous Finance's aggregator.
 
 ```bash
-pnpm dev trade <amount> <from_token> <to_token>
+npx fibx trade <amount> <from_token> <to_token>
 ```
 
 **Examples:**
 
 ```bash
 # Swap 0.0001 ETH to USDC
-pnpm dev trade 0.0001 ETH USDC
+npx fibx trade 0.0001 ETH USDC
 
 # Swap 20 USDC to DAI
-pnpm dev trade 20 USDC DAI
+npx fibx trade 20 USDC DAI
 ```
 
 **Options:**
@@ -123,8 +128,19 @@ pnpm dev trade 20 USDC DAI
 Print your connected server wallet address:
 
 ```bash
-pnpm dev address
+npx fibx address
 ```
+
+## Agent Skills
+
+Looking to use `fibx` with an AI Agent? Check out the [fibx-agentic-wallet-skills](./fibx-agentic-wallet-skills/README.md) package.
+
+## Development
+
+1. Clone the repo
+2. `pnpm install`
+3. `cp .env.example .env` (add secrets)
+4. Run commands with `pnpm dev <command>`
 
 # Architecture
 
