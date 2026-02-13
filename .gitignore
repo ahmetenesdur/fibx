@@ -3,3 +3,6 @@ dist/
 *.tsbuildinfo
 .env
 .env.local
+.agent/
+.agents/
+.DS_Store
