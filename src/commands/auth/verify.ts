@@ -3,9 +3,9 @@ import {
 	createAgentWallet,
 	findExistingWallet,
 	saveWalletIdToUser,
-} from "../wallet/privy.js";
-import { saveSession } from "../wallet/session.js";
-import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+} from "../../services/privy/client.js";
+import { saveSession } from "../../services/auth/session.js";
+import { outputResult, outputError, withSpinner, type OutputOptions } from "../../lib/format.js";
 
 interface PrivyAuthResponse {
 	user: { id: string };
@@ -43,13 +43,12 @@ export async function authVerifyCommand(
 				}
 
 				const data = (await res.json()) as PrivyAuthResponse;
-				// Return access token (privy_access_token) for session
 				return { userId: data.user.id, userToken: data.privy_access_token };
 			},
 			opts
 		);
 
-		// Check if user already has a wallet (checks server wallet metadata first)
+		// Check for existing wallet
 		const existingWallet = await withSpinner(
 			"Checking for existing wallet...",
 			async () => findExistingWallet(privy, email),
@@ -60,18 +59,17 @@ export async function authVerifyCommand(
 		let isExisting: boolean;
 
 		if (existingWallet) {
-			// Reuse existing wallet
 			wallet = existingWallet;
 			isExisting = true;
 		} else {
-			// Create new SERVER wallet (no owner) for the user
+			// Create new server wallet
 			wallet = await withSpinner(
 				"Creating server wallet...",
-				async () => createAgentWallet(privy), // No owner argument = Server Wallet
+				async () => createAgentWallet(privy),
 				opts
 			);
 
-			// Persist the server wallet ID to the user's metadata
+			// Link wallet to user
 			await withSpinner(
 				"Linking wallet to user...",
 				async () => saveWalletIdToUser(privy, userId, wallet.id),

@@ -1,5 +1,5 @@
-import { requireSession } from "../wallet/session.js";
-import { outputResult, outputError, type OutputOptions } from "../format/output.js";
+import { requireSession } from "../../services/auth/session.js";
+import { outputResult, outputError, type OutputOptions } from "../../lib/format.js";
 
 export async function addressCommand(opts: OutputOptions): Promise<void> {
 	try {

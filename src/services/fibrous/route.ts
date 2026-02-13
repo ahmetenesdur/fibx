@@ -1,8 +1,8 @@
 import type { Address } from "viem";
 import { encodeFunctionData } from "viem";
-import { FIBROUS_BASE_URL, ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../utils/config.js";
-import { getChainConfig } from "../chain/chains.js";
-import { ErrorCode, FibxError } from "../utils/errors.js";
+import { FIBROUS_BASE_URL, ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../../lib/config.js";
+import { getChainConfig } from "../chain/constants.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 export interface RouteToken {
 	name: string;

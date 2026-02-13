@@ -1,14 +1,14 @@
 import type { Address } from "viem";
-import { requireSession } from "../wallet/session.js";
-import { getPrivyClient } from "../wallet/privy.js";
-import { getWalletClient } from "../chain/viem.js";
-import { getChainConfig } from "../chain/chains.js";
-import { encodeTransfer } from "../chain/erc20.js";
-import { ACTIVE_NETWORK } from "../utils/config.js";
-import { resolveToken } from "../fibrous/tokens.js";
-import { validateAddress, validateAmount } from "../utils/validation.js";
-import { parseAmount } from "../utils/parseAmount.js";
-import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+import { requireSession } from "../../services/auth/session.js";
+import { getPrivyClient } from "../../services/privy/client.js";
+import { getWalletClient } from "../../services/chain/client.js";
+import { getChainConfig } from "../../services/chain/constants.js";
+import { encodeTransfer } from "../../services/chain/erc20.js";
+import { ACTIVE_NETWORK } from "../../lib/config.js";
+import { resolveToken } from "../../services/fibrous/tokens.js";
+import { validateAddress, validateAmount } from "../../lib/validation.js";
+import { parseAmount } from "../../lib/parseAmount.js";
+import { outputResult, outputError, withSpinner, type OutputOptions } from "../../lib/format.js";
 
 export async function sendCommand(
 	amount: string,

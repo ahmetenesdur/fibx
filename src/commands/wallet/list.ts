@@ -1,5 +1,5 @@
-import { getPrivyClient } from "../wallet/privy.js";
-import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+import { getPrivyClient } from "../../services/privy/client.js";
+import { outputResult, outputError, withSpinner, type OutputOptions } from "../../lib/format.js";
 
 interface PrivyWallet {
 	address: string;

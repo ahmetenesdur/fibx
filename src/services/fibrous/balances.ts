@@ -1,6 +1,6 @@
-import { FIBROUS_GRAPH_URL, ACTIVE_NETWORK } from "../utils/config.js";
-import { getChainConfig } from "../chain/chains.js";
-import { ErrorCode, FibxError } from "../utils/errors.js";
+import { FIBROUS_GRAPH_URL, ACTIVE_NETWORK } from "../../lib/config.js";
+import { getChainConfig } from "../chain/constants.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 interface TokenInput {
 	address: string;

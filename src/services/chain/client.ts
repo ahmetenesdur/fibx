@@ -1,9 +1,9 @@
 import { createPublicClient, createWalletClient, http, toHex } from "viem";
 import type { PrivyClient } from "@privy-io/node";
 
-import type { Session } from "../wallet/session.js";
-import { ACTIVE_NETWORK } from "../utils/config.js";
-import { getChainConfig } from "./chains.js";
+import type { Session } from "../auth/session.js";
+import { ACTIVE_NETWORK } from "../../lib/config.js";
+import { getChainConfig } from "./constants.js";
 
 const chain = getChainConfig(ACTIVE_NETWORK);
 
@@ -18,11 +18,11 @@ function toPrivyViemAccount(privy: PrivyClient, walletId: string, address: strin
 		address: address as `0x${string}`,
 		type: "local" as const,
 		source: "privy" as const,
-		publicKey: address as `0x${string}`, // This is technically incorrect but sufficient for most viem operations that don't need the public key explicitly
+		// Sufficient for most viem operations
+		publicKey: address as `0x${string}`,
 		async signTransaction(transaction: Record<string, unknown>) {
 			const { chainId, ...txParams } = transaction;
 
-			// Map Viem transaction to Privy format
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const privyTx: any = {
 				chain_id: toHex(chainId as number),

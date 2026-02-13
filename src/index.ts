@@ -1,21 +1,21 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
-import { statusCommand } from "./commands/status.js";
-import { authLoginCommand } from "./commands/auth-login.js";
-import { authVerifyCommand } from "./commands/auth-verify.js";
-import { addressCommand } from "./commands/address.js";
-import { balanceCommand } from "./commands/balance.js";
-import { sendCommand } from "./commands/send.js";
-import { tradeCommand } from "./commands/trade.js";
-import { walletsCommand } from "./commands/wallets.js";
+import { statusCommand } from "./commands/trade/status.js";
+import { authLoginCommand } from "./commands/auth/login.js";
+import { authVerifyCommand } from "./commands/auth/verify.js";
+import { addressCommand } from "./commands/wallet/address.js";
+import { balanceCommand } from "./commands/wallet/balance.js";
+import { sendCommand } from "./commands/wallet/send.js";
+import { tradeCommand } from "./commands/trade/swap.js";
+import { walletsCommand } from "./commands/wallet/list.js";
 
 const program = new Command();
 
 program
 	.name("fibx")
 	.description("Fibrous DeFi CLI — wallet, transfer, swap")
-	.version("0.1.0")
+	.version("0.1.2")
 	.option("--json", "Output results as JSON", false);
 
 const auth = program.command("auth").description("Authentication commands");

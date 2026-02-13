@@ -1,8 +1,8 @@
-import { loadSession } from "../wallet/session.js";
-import { checkHealth } from "../fibrous/health.js";
-import { getChainConfig } from "../chain/chains.js";
-import { ACTIVE_NETWORK } from "../utils/config.js";
-import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+import { loadSession } from "../../services/auth/session.js";
+import { checkHealth } from "../../services/fibrous/health.js";
+import { getChainConfig } from "../../services/chain/constants.js";
+import { ACTIVE_NETWORK } from "../../lib/config.js";
+import { outputResult, outputError, withSpinner, type OutputOptions } from "../../lib/format.js";
 
 export async function statusCommand(opts: OutputOptions): Promise<void> {
 	try {

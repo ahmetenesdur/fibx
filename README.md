@@ -147,29 +147,5 @@ Looking to use `fibx` with an AI Agent? Check out the [fibx-agentic-wallet-skill
 This CLI uses a **Server Wallet** architecture:
 
 1.  **Privy**: Manages the embedded wallets. We use "Ownerless" wallets (Agents) that are controlled via the Privy App Secret, allowing the CLI to sign transactions programmatically without requiring a user-side browser or JWT.
-2.  **Viem**: Handles all blockchain interactions (RPC calls, transaction signing) using a custom Privy-backed account.
-3.  **Fibrous**: Provides the routing and calldata for optimal token swaps on Base.
-
-## Project Structure
-
-```
-src/
-├── cli.ts               # Entry point & Command definitions
-├── commands/            # Command implementation logic
-│   ├── auth-login.ts    # Step 1: Request OTP
-│   ├── auth-verify.ts   # Step 2: Verify & Provision Wallet
-│   ├── trade.ts         # Swap logic via Fibrous
-│   ├── send.ts          # ETH/ERC20 transfer logic
-│   └── ...
-├── chain/               # Blockchain layer
-│   └── viem.ts          # Viem client & Custom Privy Account
-├── wallet/              # Wallet management
-│   ├── privy.ts         # Privy SDK integration (Server Wallets)
-│   └── session.ts       # Local session management
-├── fibrous/             # Fibrous API integration
-└── utils/               # Config, validation, and helpers
-```
-
-## License
-
-MIT
+2.  **Viem**: Handles all blockchain interactions (RPC calls, transaction signing) using a custom Privy-backed account, abstracted in the `services/chain` module.
+3.  **Fibrous**: Provides the routing and calldata for optimal token swaps on Base, encapsulated in the `services/fibrous` module.

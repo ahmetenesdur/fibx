@@ -1,5 +1,5 @@
 import { encodeFunctionData, type Address } from "viem";
-import { publicClient } from "./viem.js";
+import { publicClient } from "./client.js";
 
 const ERC20_ABI = [
 	{

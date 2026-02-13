@@ -1,15 +1,15 @@
 import type { Address } from "viem";
-import { requireSession } from "../wallet/session.js";
-import { getPrivyClient } from "../wallet/privy.js";
-import { getWalletClient } from "../chain/viem.js";
-import { getChainConfig } from "../chain/chains.js";
-import { getAllowance, encodeApprove } from "../chain/erc20.js";
-import { resolveToken } from "../fibrous/tokens.js";
-import { getRouteAndCallData, encodeSwapCalldata } from "../fibrous/route.js";
-import { ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../utils/config.js";
-import { validateAmount } from "../utils/validation.js";
-import { parseAmount, formatAmount } from "../utils/parseAmount.js";
-import { outputResult, outputError, withSpinner, type OutputOptions } from "../format/output.js";
+import { requireSession } from "../../services/auth/session.js";
+import { getPrivyClient } from "../../services/privy/client.js";
+import { getWalletClient } from "../../services/chain/client.js";
+import { getChainConfig } from "../../services/chain/constants.js";
+import { getAllowance, encodeApprove } from "../../services/chain/erc20.js";
+import { resolveToken } from "../../services/fibrous/tokens.js";
+import { getRouteAndCallData, encodeSwapCalldata } from "../../services/fibrous/route.js";
+import { ACTIVE_NETWORK, DEFAULT_SLIPPAGE } from "../../lib/config.js";
+import { validateAmount } from "../../lib/validation.js";
+import { parseAmount, formatAmount } from "../../lib/parseAmount.js";
+import { outputResult, outputError, withSpinner, type OutputOptions } from "../../lib/format.js";
 
 interface TradeOptions extends OutputOptions {
 	slippage: number;

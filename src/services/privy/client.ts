@@ -1,5 +1,5 @@
 import { PrivyClient } from "@privy-io/node";
-import { ErrorCode, FibxError } from "../utils/errors.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 export function getPrivyClient(): PrivyClient {
 	const appId = process.env.PRIVY_APP_ID;
@@ -28,7 +28,7 @@ export async function findExistingWallet(
 				const wallet = await privy.wallets().get(serverWalletId);
 				return { id: wallet.id, address: wallet.address };
 			} catch {
-				// Server wallet ID exists in metadata but wallet not found (deleted?)
+				// Wallet likely deleted
 			}
 		}
 

@@ -1,7 +1,7 @@
-import { FIBROUS_GRAPH_URL, ACTIVE_NETWORK } from "../utils/config.js";
-import { getChainConfig } from "../chain/chains.js";
-import { readCache, writeCache } from "../utils/cache.js";
-import { ErrorCode, FibxError } from "../utils/errors.js";
+import { FIBROUS_GRAPH_URL, ACTIVE_NETWORK } from "../../lib/config.js";
+import { getChainConfig } from "../chain/constants.js";
+import { readCache, writeCache } from "../../lib/cache.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 export interface Token {
 	name: string;

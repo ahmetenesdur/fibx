@@ -1,6 +1,6 @@
 import chalk from "chalk";
 import ora, { type Ora } from "ora";
-import { FibxError } from "../utils/errors.js";
+import { FibxError } from "./errors.js";
 
 export interface OutputOptions {
 	json: boolean;

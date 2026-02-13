@@ -1,8 +1,8 @@
 import { readFileSync, writeFileSync, unlinkSync, mkdirSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { z } from "zod";
-import { paths } from "../utils/config.js";
-import { ErrorCode, FibxError } from "../utils/errors.js";
+import { paths } from "../../lib/config.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 const sessionSchema = z.object({
 	userId: z.string().optional(),
