@@ -8,38 +8,53 @@ import { monadRouterAbi } from "../fibrous/abi/monad.js";
 
 export const citrea = defineChain({
 	id: 4114,
-	name: "Citrea",
-	nativeCurrency: { name: "cBTC", symbol: "cBTC", decimals: 18 },
+	name: "Citrea Mainnet",
+	nativeCurrency: { name: "Citrea Bitcoin", symbol: "cBTC", decimals: 18 },
 	rpcUrls: {
-		default: { http: ["https://rpc.citrea.xyz"] },
+		default: { http: ["https://rpc.mainnet.citrea.xyz"] },
 	},
 	blockExplorers: {
-		default: { name: "Citrea Explorer", url: "https://explorer.mainnet.citrea.xyz" },
+		default: {
+			name: "Citrea Explorer",
+			url: "https://explorer.mainnet.citrea.xyz",
+			apiUrl: "https://explorer.mainnet.citrea.xyz/api",
+		},
 	},
+	testnet: false,
 });
 
 export const hyperevm = defineChain({
-	id: 998,
+	id: 999,
 	name: "HyperEVM",
-	nativeCurrency: { name: "HYPE", symbol: "HYPE", decimals: 18 },
+	nativeCurrency: { name: "Hyperliquid", symbol: "HYPE", decimals: 18 },
 	rpcUrls: {
-		default: { http: ["https://rpc.hyperevm.xyz"] },
+		default: { http: ["https://rpc.hyperliquid.xyz/evm"] },
 	},
+	blockExplorers: {
+		default: {
+			name: "HyperEVM Scan",
+			url: "https://hyperevmscan.io",
+			apiUrl: "https://hyperevmscan.io/api",
+		},
+	},
+	testnet: false,
 });
 
 export const monad = defineChain({
 	id: 143,
-	name: "Monad",
-	nativeCurrency: { name: "MON", symbol: "MON", decimals: 18 },
+	name: "Monad Mainnet",
+	nativeCurrency: { name: "Monad", symbol: "MON", decimals: 18 },
 	rpcUrls: {
-		default: { http: ["https://rpc.monad.xyz"] },
+		default: { http: ["https://rpc-mainnet.monadinfra.com"] },
 	},
 	blockExplorers: {
 		default: {
-			name: "MonadVision",
+			name: "Monad Vision",
 			url: "https://monadvision.com",
+			apiUrl: "https://monadvision.com/api",
 		},
 	},
+	testnet: false,
 });
 
 export interface ChainConfig {
@@ -66,16 +81,16 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		id: 4114,
 		name: "citrea",
 		viemChain: citrea,
-		rpcUrl: "https://rpc.citrea.xyz",
+		rpcUrl: "https://rpc.mainnet.citrea.xyz",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "citrea",
 		routerAbi: citreaRouterAbi as Abi,
 	},
 	hyperevm: {
-		id: 998,
+		id: 999,
 		name: "hyperevm",
 		viemChain: hyperevm,
-		rpcUrl: "https://rpc.hyperevm.xyz",
+		rpcUrl: "https://rpc.hyperliquid.xyz/evm",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "hyperevm",
 		routerAbi: hyperevmRouterAbi as Abi,
@@ -84,7 +99,7 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		id: 143,
 		name: "monad",
 		viemChain: monad,
-		rpcUrl: "https://rpc.monad.xyz",
+		rpcUrl: "https://rpc-mainnet.monadinfra.com",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "monad",
 		routerAbi: monadRouterAbi as Abi,
