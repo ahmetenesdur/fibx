@@ -1,7 +1,7 @@
 {
 	"name": "fibx",
-	"version": "0.1.3",
-	"description": "Fibrous DeFi CLI for Base — wallet, transfer, swap",
+	"version": "0.1.4",
+	"description": "A powerful CLI for DeFi operations on Base, Citrea, HyperEVM, and Monad, powered by Fibrous.",
 	"type": "module",
 	"bin": {
 		"fibx": "dist/index.js"
@@ -46,12 +46,17 @@
 	"keywords": [
 		"wallet",
 		"fibrous",
-		"crypto",
 		"defi",
 		"base",
+		"citrea",
+		"hyperevm",
+		"monad",
 		"cli",
 		"swap",
-		"usdc"
+		"agent",
+		"ai",
+		"mcp",
+		"skills"
 	],
 	"license": "MIT"
 }

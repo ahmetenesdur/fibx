@@ -1,6 +1,6 @@
 # fibx
 
-A command-line tool for specialized DeFi operations on **Base, Citrea, HyperEVM, and Monad**, powered by [Fibrous Finance](https://fibrous.finance) aggregation and [Privy](https://privy.io) Server Wallets.
+A command-line tool for specialized DeFi operations on **Base, Citrea, HyperEVM, and Monad**, powered by [Fibrous](https://fibrous.finance) aggregation and [Privy](https://privy.io) Server Wallets.
 
 [![npm version](https://badge.fury.io/js/fibx.svg)](https://badge.fury.io/js/fibx)
 
