@@ -1,6 +1,5 @@
 import {
 	createPublicClient,
-	createWalletClient,
 	http,
 	parseUnits,
 	formatUnits,
@@ -11,7 +10,6 @@ import {
 	type WalletClient,
 	erc20Abi,
 } from "viem";
-import { privateKeyToAccount } from "viem/accounts";
 import { base } from "viem/chains";
 import { RPC_URLS } from "../chain/constants.js";
 import { POOL_ADDRESSES_PROVIDER_ABI, POOL_ABI } from "./abi/aave.js";
@@ -32,20 +30,14 @@ export class AaveService {
 	private account?: Account;
 	private userAddress?: Address;
 
-	constructor(privateKey?: string) {
+	constructor(walletClient?: WalletClient) {
 		this.publicClient = createPublicClient({
 			chain: base,
 			transport: http(RPC_URLS.base),
 		}) as PublicClient;
 
-		if (privateKey) {
-			this.account = privateKeyToAccount(privateKey as Hash);
-			this.walletClient = createWalletClient({
-				account: this.account,
-				chain: base,
-				transport: http(RPC_URLS.base),
-			});
-			this.userAddress = this.account.address;
+		if (walletClient) {
+			this.setWalletClient(walletClient);
 		}
 	}
 

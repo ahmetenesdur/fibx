@@ -6,10 +6,12 @@ import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 const sessionSchema = z.object({
 	userId: z.string().optional(),
-	walletId: z.string(),
+	walletId: z.string().optional(), // Optional for private-key auth
 	walletAddress: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
 	userJwt: z.string().optional(),
 	createdAt: z.string(),
+	type: z.enum(["privy", "private-key"]).default("privy"),
+	privateKey: z.string().optional(), // Only for private-key auth
 });
 
 export type Session = z.infer<typeof sessionSchema>;

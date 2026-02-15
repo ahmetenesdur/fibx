@@ -32,21 +32,21 @@ export const aaveCommand = async (
 		const chainConfig = getChainConfig("base");
 
 		// Initialize Service
-		const privateKey = process.env.PRIVATE_KEY;
-		const aave = new AaveService(privateKey);
+		const aave = new AaveService();
 
-		if (!privateKey) {
+		try {
+			// Try to load session (Privy or Private Key)
 			await attemptSessionLogin(aave, chainConfig);
+		} catch {
+			// Ignore if no session, aave service handles missing wallet gracefully for read-only
 		}
 
 		const userAddress = aave.getAccountAddress();
 		if (!userAddress) {
 			if (action === "status") {
-				spinner.fail("No wallet connected. Run `fibx auth login` or set PRIVATE_KEY.");
+				spinner.fail("No wallet connected. Run `fibx auth login` or `fibx auth import`.");
 			} else {
-				spinner.fail(
-					"Missing PRIVATE_KEY in .env or active session for transaction signing."
-				);
+				spinner.fail("No active session found. Please login or import a private key.");
 			}
 			return;
 		}
@@ -120,8 +120,8 @@ async function attemptSessionLogin(aave: AaveService, chainConfig: ChainConfig) 
 		const { getWalletClient } = await import("../../services/chain/client.js");
 
 		const session = loadSession();
-		if (session?.walletAddress) {
-			const privy = getPrivyClient();
+		if (session) {
+			const privy = session.type === "privy" ? getPrivyClient() : null;
 			const walletClient = getWalletClient(privy, session, chainConfig);
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			aave.setWalletClient(walletClient as any);

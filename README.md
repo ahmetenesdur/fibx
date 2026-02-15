@@ -13,6 +13,7 @@ A command-line tool for specialized DeFi operations on **Base, Citrea, HyperEVM,
 - **Transaction Status**: Check the status of any transaction hash and get a block explorer link.
 - **Aave V3 Integration**: Supply, borrow, repay, and withdraw assets on Base (DeFi).
 - **Automated Auth Flow**: One-time email OTP login provisions a persistent server wallet linked to your user profile.
+- **Private Key Import**: Support for importing existing private keys for local execution.
 - **JSON Output**: All commands support `--json` for easy integration into scripts and pipelines.
 
 ## Requirements
@@ -47,7 +48,7 @@ export PRIVY_APP_ID="your_app_id"
 export PRIVY_APP_SECRET="your_app_secret"
 ```
 
-### 3. Authenticate & Provision Wallet
+### 2. Authenticate & Provision Wallet
 
 This two-step process links your email to a server-side wallet.
 
@@ -68,6 +69,18 @@ npx fibx auth verify user@example.com 123456
 ```
 
 _Successfully verifying will create a local session file and provision a Server Wallet if one doesn't exist._
+
+### 3. Alternative: Import Private Key
+
+If you prefer to use an existing private key (e.g., from Metamask or a generated wallet) instead of Privy:
+
+```bash
+npx fibx auth import
+```
+
+_This will securely prompt for your private key and store it locally in `session.json` for signing transactions._
+
+> **Security Note:** Your private key is stored locally on your machine. Ensure your environment is secure.
 
 ### 4. Check Status
 
@@ -154,7 +167,7 @@ npx fibx tx-status 0x456...def --chain monad
 
 ### View Wallet Address
 
-Print your connected server wallet address:
+Print your connected wallet address (Privy or Local):
 
 ```bash
 npx fibx address
@@ -197,8 +210,10 @@ Check out the [fibx-skills](https://github.com/ahmetenesdur/fibx-skills) directo
 
 # Architecture
 
-This CLI uses a **Server Wallet** architecture:
+This CLI uses a **Hybrid Wallet** architecture:
 
-1.  **Privy**: Manages the embedded wallets. We use "Ownerless" wallets (Agents) that are controlled via the Privy App Secret, allowing the CLI to sign transactions programmatically without requiring a user-side browser or JWT.
-2.  **Viem**: Handles all blockchain interactions (RPC calls, transaction signing) using a custom Privy-backed account, abstracted in the `services/chain` module.
+1.  **Authentication**:
+    - **Privy**: Uses "Agentic" server-side wallets (ownerless) for automated signing.
+    - **Local Key**: Direct private key import for standard execution without external dependencies.
+2.  **Viem**: Handles all blockchain interactions (RPC calls, transaction signing) using a unified `WalletClient` interface, abstracting away the underlying signer (Privy vs. Local).
 3.  **Fibrous**: Provides the routing and calldata for optimal token swaps on all supported chains, encapsulated in the `services/fibrous` module.

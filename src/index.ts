@@ -17,7 +17,7 @@ const program = new Command();
 program
 	.name("fibx")
 	.description("Fibrous DeFi CLI — wallet, transfer, swap")
-	.version("0.1.4")
+	.version("0.2.0")
 	.option("-c, --chain <chain>", "Chain to use (base, citrea, hyperevm, monad)", "base")
 	.option("--json", "Output results as JSON", false);
 
@@ -38,6 +38,14 @@ auth.command("verify")
 	.action(async (email, code, _opts, cmd) => {
 		const globalOpts = cmd.parent!.parent!.opts();
 		await authVerifyCommand(email, code, { json: globalOpts.json });
+	});
+
+auth.command("import")
+	.description("Import a private key for local authentication")
+	.action(async (_opts, cmd) => {
+		const globalOpts = cmd.parent!.parent!.opts();
+		const { authImportCommand } = await import("./commands/auth/import.js");
+		await authImportCommand({ json: globalOpts.json });
 	});
 
 program

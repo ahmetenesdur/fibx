@@ -85,6 +85,7 @@ export async function authVerifyCommand(
 			walletAddress: wallet.address as `0x${string}`,
 			userJwt: userToken,
 			createdAt: new Date().toISOString(),
+			type: "privy",
 		});
 
 		outputResult(
