@@ -11,6 +11,8 @@ import {
 	WETH_BASE_ADDRESS,
 } from "../../services/defi/constants.js";
 import { outputError, outputResult } from "../../lib/format.js";
+import { getPublicClient } from "../../services/chain/client.js";
+import { formatUnits, parseUnits } from "viem";
 
 interface GlobalOptions {
 	json?: boolean;
@@ -89,7 +91,16 @@ export const aaveCommand = async (
 
 		switch (action) {
 			case "supply":
-				await handleSupply(aave, token, amount, userAddress, chainConfig, spinner, opts);
+				await handleSupply(
+					aave,
+					token,
+					amount,
+					userAddress,
+					chainConfig,
+					spinner,
+					opts,
+					tokenSymbol.toUpperCase() === "ETH"
+				);
 				break;
 			case "borrow":
 				await handleBorrow(aave, token, amount, spinner, opts);
@@ -175,7 +186,8 @@ async function handleSupply(
 	userAddress: Address,
 	chainConfig: ChainConfig,
 	spinner: Ora,
-	opts: GlobalOptions
+	opts: GlobalOptions,
+	isNativeETH: boolean = false
 ) {
 	// Balance Check
 	spinner.text = "Checking balance...";
@@ -184,18 +196,53 @@ async function handleSupply(
 		userAddress,
 		chainConfig
 	);
-	const userBalance = balances.find(
+	const wethBalanceData = balances.find(
 		(b) => b.token.address.toLowerCase() === token.address.toLowerCase()
 	);
 
-	if (userBalance && parseFloat(userBalance.balance) < parseFloat(amount)) {
-		spinner.fail(chalk.red("Insufficient Balance"));
-		console.log(
-			chalk.yellow(`You have ${userBalance.balance} ${token.symbol}, but need ${amount}.`)
-		);
-		console.log(chalk.blue(`Tip: Swap tokens first:`));
-		console.log(chalk.cyan(`   fibx trade ${amount} ETH ${token.symbol}`));
-		return;
+	const amountBigInt = parseUnits(amount, token.decimals);
+	const wethBalanceBigInt = wethBalanceData
+		? parseUnits(wethBalanceData.balance, token.decimals)
+		: 0n;
+
+	if (isNativeETH) {
+		const publicClient = getPublicClient(chainConfig);
+		const ethBalanceBigInt = await publicClient.getBalance({ address: userAddress });
+
+		const totalAvailable = ethBalanceBigInt + wethBalanceBigInt;
+
+		if (totalAvailable < amountBigInt) {
+			spinner.fail(chalk.red("Insufficient Balance"));
+			console.log(
+				chalk.yellow(
+					`You have ${formatUnits(ethBalanceBigInt, 18)} ETH + ${formatUnits(
+						wethBalanceBigInt,
+						18
+					)} WETH, but need ${amount}.`
+				)
+			);
+			return;
+		}
+
+		// Check if we need to wrap
+		if (wethBalanceBigInt < amountBigInt) {
+			const neededWETH = amountBigInt - wethBalanceBigInt;
+			spinner.text = `Wrapping ${formatUnits(neededWETH, 18)} ETH to WETH...`;
+			await aave.wrapETH(formatUnits(neededWETH, 18));
+			spinner.succeed("Wrapped ETH successfully");
+		}
+	} else {
+		if (wethBalanceBigInt < amountBigInt) {
+			spinner.fail(chalk.red("Insufficient Balance"));
+			console.log(
+				chalk.yellow(
+					`You have ${formatUnits(wethBalanceBigInt, token.decimals)} ${
+						token.symbol
+					}, but need ${amount}.`
+				)
+			);
+			return;
+		}
 	}
 
 	spinner.text = "Signaling Aave Supply...";

@@ -12,8 +12,13 @@ import {
 } from "viem";
 import { base } from "viem/chains";
 import { RPC_URLS } from "../chain/constants.js";
-import { POOL_ADDRESSES_PROVIDER_ABI, POOL_ABI } from "./abi/aave.js";
-import { AAVE_V3_POOL_ADDRESSES_PROVIDER, InterestRateMode } from "./constants.js";
+import { POOL_ADDRESSES_PROVIDER_ABI, POOL_ABI, WETH_ABI } from "./abi/aave.js";
+import {
+	AAVE_V3_POOL_ADDRESSES_PROVIDER,
+	InterestRateMode,
+	WETH_BASE_ADDRESS,
+} from "./constants.js";
+import { NonceManager } from "../chain/nonceManager.js";
 
 export interface UserAccountData {
 	totalCollateralUSD: string;
@@ -54,6 +59,7 @@ export class AaveService {
 		if (walletClient.account) {
 			this.account = walletClient.account;
 			this.userAddress = walletClient.account.address;
+			NonceManager.getInstance().init(this.userAddress, this.publicClient);
 		}
 	}
 
@@ -101,6 +107,7 @@ export class AaveService {
 		});
 
 		if (allowance < amount) {
+			const nonceApprove = await NonceManager.getInstance().getNextNonce();
 			const txApprove = await this.walletClient!.writeContract({
 				address: tokenAddress,
 				abi: erc20Abi,
@@ -108,11 +115,13 @@ export class AaveService {
 				args: [poolAddress, amount],
 				chain: base,
 				account: this.account!,
+				nonce: nonceApprove,
 			});
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
 		}
 
 		// Execute Supply
+		const nonceSupply = await NonceManager.getInstance().getNextNonce();
 		const txSupply = await this.walletClient!.writeContract({
 			address: poolAddress,
 			abi: POOL_ABI,
@@ -120,10 +129,33 @@ export class AaveService {
 			args: [tokenAddress, amount, this.account!.address, 0],
 			chain: base,
 			account: this.account!,
+			nonce: nonceSupply,
 		});
 
 		await this.publicClient.waitForTransactionReceipt({ hash: txSupply });
 		return txSupply;
+	}
+
+	public async wrapETH(amountStr: string): Promise<Hash> {
+		this.ensureWalletConnection();
+
+		const amount = parseUnits(amountStr, 18); // ETH always 18
+
+		const nonce = await NonceManager.getInstance().getNextNonce();
+
+		const txWrap = await this.walletClient!.writeContract({
+			address: WETH_BASE_ADDRESS,
+			abi: WETH_ABI,
+			functionName: "deposit",
+			args: [],
+			value: amount,
+			chain: base,
+			account: this.account!,
+			nonce,
+		});
+
+		await this.publicClient.waitForTransactionReceipt({ hash: txWrap });
+		return txWrap;
 	}
 
 	public async withdraw(tokenAddress: Address, amountStr: string): Promise<Hash> {
@@ -133,6 +165,8 @@ export class AaveService {
 		const decimals = await this.getTokenDecimals(tokenAddress);
 		const amount = parseUnits(amountStr, decimals);
 
+		const nonce = await NonceManager.getInstance().getNextNonce();
+
 		const txWithdraw = await this.walletClient!.writeContract({
 			address: poolAddress,
 			abi: POOL_ABI,
@@ -140,6 +174,7 @@ export class AaveService {
 			args: [tokenAddress, amount, this.account!.address],
 			chain: base,
 			account: this.account!,
+			nonce,
 		});
 
 		await this.publicClient.waitForTransactionReceipt({ hash: txWithdraw });
@@ -152,6 +187,24 @@ export class AaveService {
 		const poolAddress = await this.getPoolAddress();
 		const decimals = await this.getTokenDecimals(tokenAddress);
 		const amount = parseUnits(amountStr, decimals);
+
+		const nonce = await NonceManager.getInstance().getNextNonce();
+
+		// Simulate first to catch errors
+		await this.publicClient.simulateContract({
+			address: poolAddress,
+			abi: POOL_ABI,
+			functionName: "borrow",
+			args: [
+				tokenAddress,
+				amount,
+				BigInt(InterestRateMode.Variable),
+				0,
+				this.account!.address,
+			],
+			chain: base,
+			account: this.account!,
+		});
 
 		const txBorrow = await this.walletClient!.writeContract({
 			address: poolAddress,
@@ -166,6 +219,7 @@ export class AaveService {
 			],
 			chain: base,
 			account: this.account!,
+			nonce,
 		});
 
 		await this.publicClient.waitForTransactionReceipt({ hash: txBorrow });
@@ -188,6 +242,7 @@ export class AaveService {
 		});
 
 		if (allowance < amount) {
+			const nonceApprove = await NonceManager.getInstance().getNextNonce();
 			const txApprove = await this.walletClient!.writeContract({
 				address: tokenAddress,
 				abi: erc20Abi,
@@ -195,11 +250,14 @@ export class AaveService {
 				args: [poolAddress, amount],
 				chain: base,
 				account: this.account!,
+				nonce: nonceApprove,
 			});
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
 		}
 
 		// Execute Repay
+		const nonceRepay = await NonceManager.getInstance().getNextNonce();
+
 		const txRepay = await this.walletClient!.writeContract({
 			address: poolAddress,
 			abi: POOL_ABI,
@@ -207,6 +265,7 @@ export class AaveService {
 			args: [tokenAddress, amount, BigInt(InterestRateMode.Variable), this.account!.address],
 			chain: base,
 			account: this.account!,
+			nonce: nonceRepay,
 		});
 
 		await this.publicClient.waitForTransactionReceipt({ hash: txRepay });

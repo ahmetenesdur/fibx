@@ -49,7 +49,7 @@ export async function authImportCommand(opts: OutputOptions): Promise<void> {
 
 		console.log(
 			chalk.yellow(
-				"\n⚠️  Security Warning: Your private key is stored locally in session.json."
+				"\n    Security Warning: Your private key is stored locally in session.json."
 			)
 		);
 		console.log(chalk.yellow("    Make sure your machine is secure."));
