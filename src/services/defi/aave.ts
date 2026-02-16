@@ -17,6 +17,7 @@ import {
 	AAVE_V3_POOL_ADDRESSES_PROVIDER,
 	InterestRateMode,
 	WETH_BASE_ADDRESS,
+	MAX_UINT256,
 } from "./constants.js";
 import { NonceManager } from "../chain/nonceManager.js";
 
@@ -120,15 +121,20 @@ export class AaveService {
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
 		}
 
-		// Execute Supply
-		const nonceSupply = await NonceManager.getInstance().getNextNonce();
-		const txSupply = await this.walletClient!.writeContract({
+		// Simulate Supply
+		const { request: supplyRequest } = await this.publicClient.simulateContract({
 			address: poolAddress,
 			abi: POOL_ABI,
 			functionName: "supply",
 			args: [tokenAddress, amount, this.account!.address, 0],
-			chain: base,
 			account: this.account!,
+			chain: base,
+		});
+
+		// Execute Supply
+		const nonceSupply = await NonceManager.getInstance().getNextNonce();
+		const txSupply = await this.walletClient!.writeContract({
+			...supplyRequest,
 			nonce: nonceSupply,
 		});
 
@@ -141,16 +147,21 @@ export class AaveService {
 
 		const amount = parseUnits(amountStr, 18); // ETH always 18
 
-		const nonce = await NonceManager.getInstance().getNextNonce();
-
-		const txWrap = await this.walletClient!.writeContract({
+		// Simulate Deposit
+		const { request } = await this.publicClient.simulateContract({
 			address: WETH_BASE_ADDRESS,
 			abi: WETH_ABI,
 			functionName: "deposit",
 			args: [],
 			value: amount,
-			chain: base,
 			account: this.account!,
+			chain: base,
+		});
+
+		const nonce = await NonceManager.getInstance().getNextNonce();
+
+		const txWrap = await this.walletClient!.writeContract({
+			...request,
 			nonce,
 		});
 
@@ -163,15 +174,20 @@ export class AaveService {
 
 		const amount = parseUnits(amountStr, 18);
 
-		const nonce = await NonceManager.getInstance().getNextNonce();
-
-		const txUnwrap = await this.walletClient!.writeContract({
+		// Simulate Withdraw
+		const { request } = await this.publicClient.simulateContract({
 			address: WETH_BASE_ADDRESS,
 			abi: WETH_ABI,
 			functionName: "withdraw",
 			args: [amount],
-			chain: base,
 			account: this.account!,
+			chain: base,
+		});
+
+		const nonce = await NonceManager.getInstance().getNextNonce();
+
+		const txUnwrap = await this.walletClient!.writeContract({
+			...request,
 			nonce,
 		});
 
@@ -183,29 +199,40 @@ export class AaveService {
 		this.ensureWalletConnection();
 
 		const poolAddress = await this.getPoolAddress();
-		const decimals = await this.getTokenDecimals(tokenAddress);
-		const amount = parseUnits(amountStr, decimals);
 		const userAddress = this.account!.address;
+		let amount: bigint;
+
+		if (amountStr.toLowerCase() === "max" || amountStr === "-1") {
+			amount = MAX_UINT256;
+		} else {
+			const decimals = await this.getTokenDecimals(tokenAddress);
+			amount = parseUnits(amountStr, decimals);
+		}
 
 		const nonce = await NonceManager.getInstance().getNextNonce();
 
 		// Simulate first to catch errors
+		let request;
+		// Simulate first to catch errors
 		try {
-			await this.publicClient.simulateContract({
+			const result = await this.publicClient.simulateContract({
 				address: poolAddress,
 				abi: POOL_ABI,
 				functionName: "withdraw",
 				args: [tokenAddress, amount, userAddress],
 				account: userAddress,
+				chain: base,
 			});
-		} catch (error: any) {
+			request = result.request;
+		} catch (error: unknown) {
+			const err = error as Error & { cause?: { message?: string } };
 			// Smart Error Handling
 			const userData = await this.getUserAccountData(userAddress);
 			const totalDebt = parseFloat(userData.totalDebtUSD);
 
 			if (
-				error.message?.includes("HealthFactorLowerThanLiquidationThreshold") ||
-				error.cause?.message?.includes("0x6679996d")
+				err.message?.includes("HealthFactorLowerThanLiquidationThreshold") ||
+				err.cause?.message?.includes("0x6679996d")
 			) {
 				let details = "This amount would lower your Health Factor below 1.0.";
 
@@ -229,12 +256,7 @@ export class AaveService {
 		}
 
 		const txWithdraw = await this.walletClient!.writeContract({
-			address: poolAddress,
-			abi: POOL_ABI,
-			functionName: "withdraw",
-			args: [tokenAddress, amount, userAddress],
-			chain: base,
-			account: this.account!,
+			...request,
 			nonce,
 		});
 
@@ -252,8 +274,10 @@ export class AaveService {
 		const nonce = await NonceManager.getInstance().getNextNonce();
 
 		// Simulate first to catch errors
+		let request;
+		// Simulate first to catch errors
 		try {
-			await this.publicClient.simulateContract({
+			const result = await this.publicClient.simulateContract({
 				address: poolAddress,
 				abi: POOL_ABI,
 				functionName: "borrow",
@@ -267,10 +291,12 @@ export class AaveService {
 				chain: base,
 				account: this.account!,
 			});
-		} catch (error: any) {
+			request = result.request;
+		} catch (error: unknown) {
+			const err = error as Error & { cause?: { message?: string } };
 			if (
-				error.message?.includes("HealthFactorLowerThanLiquidationThreshold") ||
-				error.cause?.message?.includes("0x6679996d")
+				err.message?.includes("HealthFactorLowerThanLiquidationThreshold") ||
+				err.cause?.message?.includes("0x6679996d")
 			) {
 				throw new Error(
 					"Cannot borrow: This amount would lower your Health Factor below 1.0 (Liquidation Threshold). Try borrowing a smaller amount or adding more collateral first."
@@ -280,18 +306,7 @@ export class AaveService {
 		}
 
 		const txBorrow = await this.walletClient!.writeContract({
-			address: poolAddress,
-			abi: POOL_ABI,
-			functionName: "borrow",
-			args: [
-				tokenAddress,
-				amount,
-				BigInt(InterestRateMode.Variable),
-				0,
-				this.account!.address,
-			],
-			chain: base,
-			account: this.account!,
+			...request,
 			nonce,
 		});
 
@@ -303,8 +318,14 @@ export class AaveService {
 		this.ensureWalletConnection();
 
 		const poolAddress = await this.getPoolAddress();
-		const decimals = await this.getTokenDecimals(tokenAddress);
-		const amount = parseUnits(amountStr, decimals);
+		let amount: bigint;
+
+		if (amountStr.toLowerCase() === "max" || amountStr === "-1") {
+			amount = MAX_UINT256;
+		} else {
+			const decimals = await this.getTokenDecimals(tokenAddress);
+			amount = parseUnits(amountStr, decimals);
+		}
 
 		// Check Allowance & Approve if necessary
 		const allowance = await this.publicClient.readContract({
@@ -320,7 +341,7 @@ export class AaveService {
 				address: tokenAddress,
 				abi: erc20Abi,
 				functionName: "approve",
-				args: [poolAddress, amount],
+				args: [poolAddress, amount], // Approve MAX if MAX requested
 				chain: base,
 				account: this.account!,
 				nonce: nonceApprove,
@@ -328,16 +349,21 @@ export class AaveService {
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
 		}
 
-		// Execute Repay
-		const nonceRepay = await NonceManager.getInstance().getNextNonce();
-
-		const txRepay = await this.walletClient!.writeContract({
+		// Simulate Repay
+		const { request: repayRequest } = await this.publicClient.simulateContract({
 			address: poolAddress,
 			abi: POOL_ABI,
 			functionName: "repay",
 			args: [tokenAddress, amount, BigInt(InterestRateMode.Variable), this.account!.address],
-			chain: base,
 			account: this.account!,
+			chain: base,
+		});
+
+		// Execute Repay
+		const nonceRepay = await NonceManager.getInstance().getNextNonce();
+
+		const txRepay = await this.walletClient!.writeContract({
+			...repayRequest,
 			nonce: nonceRepay,
 		});
 

@@ -31,6 +31,8 @@ export async function tradeCommand(
 
 		const session = requireSession();
 		const privy = getPrivyClient();
+		const walletClient = getWalletClient(privy, session, chain);
+		const publicClient = getPublicClient(chain);
 		const wallet = session.walletAddress as Address;
 
 		const [tokenIn, tokenOut] = await withSpinner(
@@ -41,7 +43,8 @@ export async function tradeCommand(
 
 		const amountBaseUnits = parseAmount(amount, tokenIn.decimals);
 		const isNativeInput =
-			tokenIn.address.toLowerCase() === chain.nativeTokenAddress.toLowerCase();
+			tokenIn.address.toLowerCase() === chain.nativeTokenAddress.toLowerCase() ||
+			tokenIn.symbol.toUpperCase() === "ETH";
 
 		const routeData = await withSpinner(
 			"Finding best route...",
@@ -61,11 +64,10 @@ export async function tradeCommand(
 		);
 
 		const routerAddress = routeData.router_address as Address;
-		const walletClient = getWalletClient(privy, session, chain);
 
 		if (!isNativeInput) {
 			const currentAllowance = await getAllowance(
-				getPublicClient(chain),
+				publicClient,
 				tokenIn.address as Address,
 				wallet,
 				routerAddress
@@ -94,10 +96,27 @@ export async function tradeCommand(
 			`Swapping ${amount} ${tokenIn.symbol} → ${tokenOut.symbol}...`,
 			async () => {
 				const swapData = encodeSwapCalldata(routeData.calldata, chain);
+				const value = isNativeInput ? amountBaseUnits : 0n;
+
+				// Simulate Swap (using estimateGas as we have raw calldata)
+				// We use call/estimateGas to ensure it doesn't revert
+				try {
+					await publicClient.estimateGas({
+						account: wallet,
+						to: routerAddress,
+						data: swapData,
+						value: value,
+					});
+				} catch (error) {
+					throw new Error(
+						`Simulation failed: ${error instanceof Error ? error.message : String(error)}`
+					);
+				}
+
 				return walletClient.sendTransaction({
 					to: routerAddress,
 					data: swapData,
-					value: isNativeInput ? amountBaseUnits : 0n,
+					value: value,
 				});
 			},
 			opts

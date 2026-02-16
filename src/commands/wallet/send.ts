@@ -1,9 +1,9 @@
 import type { Address } from "viem";
 import { requireSession } from "../../services/auth/session.js";
 import { getPrivyClient } from "../../services/privy/client.js";
-import { getWalletClient } from "../../services/chain/client.js";
+import { getWalletClient, getPublicClient } from "../../services/chain/client.js";
 import { getChainConfig } from "../../services/chain/constants.js";
-import { encodeTransfer } from "../../services/chain/erc20.js";
+import { ERC20_ABI } from "../../services/chain/erc20.js";
 import { resolveToken } from "../../services/fibrous/tokens.js";
 import { validateAddress, validateAmount } from "../../lib/validation.js";
 import { parseAmount } from "../../lib/parseAmount.js";
@@ -26,6 +26,8 @@ export async function sendCommand(
 		const session = requireSession();
 		const privy = getPrivyClient();
 		const walletClient = getWalletClient(privy, session, chain);
+		const publicClient = getPublicClient(chain);
+		const wallet = session.walletAddress as Address;
 
 		let txHash: `0x${string}`;
 		let amountBigInt: bigint;
@@ -36,6 +38,20 @@ export async function sendCommand(
 			txHash = await withSpinner(
 				`Sending ${amount} ETH on ${chain.name}...`,
 				async () => {
+					// Simulate ETH send (estimateGas)
+					try {
+						await publicClient.estimateGas({
+							account: wallet,
+							to: recipient as Address,
+							value: amountBigInt,
+							data: undefined,
+						});
+					} catch (error) {
+						throw new Error(
+							`Simulation failed: ${error instanceof Error ? error.message : String(error)}`
+						);
+					}
+
 					return walletClient.sendTransaction({
 						to: recipient as Address,
 						value: amountBigInt,
@@ -47,16 +63,20 @@ export async function sendCommand(
 		} else {
 			const token = await resolveToken(tokenSymbol, chain);
 			amountBigInt = parseAmount(amount, token.decimals);
-			const data = encodeTransfer(recipient as Address, amountBigInt);
 
 			txHash = await withSpinner(
 				`Sending ${amount} ${token.symbol} on ${chain.name}...`,
 				async () => {
-					return walletClient.sendTransaction({
-						to: token.address as Address,
-						data,
-						value: 0n,
+					// Simulate ERC20 Transfer
+					const { request } = await publicClient.simulateContract({
+						address: token.address as Address,
+						abi: ERC20_ABI,
+						functionName: "transfer",
+						args: [recipient as Address, amountBigInt],
+						account: wallet,
 					});
+
+					return walletClient.writeContract(request);
 				},
 				opts
 			);

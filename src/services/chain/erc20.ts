@@ -1,6 +1,6 @@
 import { encodeFunctionData, type Address, type PublicClient } from "viem";
 
-const ERC20_ABI = [
+export const ERC20_ABI = [
 	{
 		name: "balanceOf",
 		type: "function",
@@ -50,14 +50,6 @@ export async function getERC20Balance(
 		abi: ERC20_ABI,
 		functionName: "balanceOf",
 		args: [walletAddress],
-	});
-}
-
-export function encodeTransfer(to: Address, amount: bigint): `0x${string}` {
-	return encodeFunctionData({
-		abi: ERC20_ABI,
-		functionName: "transfer",
-		args: [to, amount],
 	});
 }
 
