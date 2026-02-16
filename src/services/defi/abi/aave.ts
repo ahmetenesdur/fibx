@@ -6,6 +6,36 @@ export const POOL_ADDRESSES_PROVIDER_ABI = [
 		inputs: [],
 		outputs: [{ type: "address" }],
 	},
+	{
+		name: "getPoolDataProvider",
+		type: "function",
+		stateMutability: "view",
+		inputs: [],
+		outputs: [{ type: "address" }],
+	},
+] as const;
+
+export const POOL_DATA_PROVIDER_ABI = [
+	{
+		name: "getUserReserveData",
+		type: "function",
+		stateMutability: "view",
+		inputs: [
+			{ name: "asset", type: "address" },
+			{ name: "user", type: "address" },
+		],
+		outputs: [
+			{ name: "currentATokenBalance", type: "uint256" },
+			{ name: "currentStableDebt", type: "uint256" },
+			{ name: "currentVariableDebt", type: "uint256" },
+			{ name: "principalStableDebt", type: "uint256" },
+			{ name: "scaledVariableDebt", type: "uint256" },
+			{ name: "stableBorrowRate", type: "uint256" },
+			{ name: "liquidityRate", type: "uint256" },
+			{ name: "stableRateLastUpdated", type: "uint40" },
+			{ name: "usageAsCollateralEnabled", type: "bool" },
+		],
+	},
 ] as const;
 
 export const POOL_ABI = [
@@ -80,6 +110,18 @@ export const POOL_ABI = [
 		inputs: [],
 		name: "HealthFactorLowerThanLiquidationThreshold",
 		type: "error",
+	},
+	{
+		inputs: [],
+		name: "NoDebtOfSelectedType",
+		type: "error",
+	},
+	{
+		name: "getReservesList",
+		type: "function",
+		stateMutability: "view",
+		inputs: [],
+		outputs: [{ type: "address[]" }],
 	},
 ] as const;
 
