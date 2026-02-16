@@ -14,6 +14,7 @@ A command-line tool for specialized DeFi operations on **Base, Citrea, HyperEVM,
 - **Aave V3 Integration**: Supply, borrow, repay, and withdraw assets on Base (DeFi).
 - **Automated Auth Flow**: One-time email OTP login provisions a persistent server wallet linked to your user profile.
 - **Private Key Import**: Support for importing existing private keys for local execution.
+- **Automated Simulation**: All transactions (send, swap, Aave) are simulated on-chain before execution to prevent failures.
 - **JSON Output**: All commands support `--json` for easy integration into scripts and pipelines.
 
 ## Requirements
@@ -82,7 +83,15 @@ _This will securely prompt for your private key and store it locally in `session
 
 > **Security Note:** Your private key is stored locally on your machine. Ensure your environment is secure.
 
-### 4. Check Status
+### 4. Logout
+
+If you want to clear your local session:
+
+```bash
+npx fibx auth logout
+```
+
+### 5. Check Status
 
 Verify that you are authenticated and the API is healthy:
 
@@ -186,8 +195,8 @@ npx fibx aave <action> <amount> <token>
 - `status`: Check account health (HF, LTV)
 - `supply`: Deposit assets
 - `borrow`: Borrow assets (requires collateral)
-- `repay`: Repay debt
-- `withdraw`: Withdraw assets
+- `repay`: Repay debt (use `max` to repay all)
+- `withdraw`: Withdraw assets (use `max` to withdraw all)
 
 **Example:**
 
