@@ -1,10 +1,10 @@
 import type { Address, PublicClient } from "viem";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 export class NonceManager {
 	private static instance: NonceManager;
 	private nonce: number | null = null;
 	private address: Address | null = null;
-	private publicClient: PublicClient | null = null;
 	private mutex: Promise<void> = Promise.resolve();
 
 	private constructor() {}
@@ -20,14 +20,16 @@ export class NonceManager {
 		// Only re-initialize if address changes or not initialized
 		if (this.address !== address || this.nonce === null) {
 			this.address = address;
-			this.publicClient = publicClient;
 			this.nonce = await publicClient.getTransactionCount({ address });
 		}
 	}
 
 	public async getNextNonce(): Promise<number> {
 		if (this.nonce === null) {
-			throw new Error("NonceManager not initialized. Call init() first.");
+			throw new FibxError(
+				ErrorCode.WALLET_ERROR,
+				"NonceManager not initialized. Call init() first."
+			);
 		}
 
 		// Simple mutex to ensure sequential access if needed, though JS is single-threaded
@@ -54,6 +56,5 @@ export class NonceManager {
 	public reset() {
 		this.nonce = null;
 		this.address = null;
-		this.publicClient = null;
 	}
 }

@@ -986,4 +986,4 @@ export const hyperevmRouterAbi = [
 		name: "TooManyTokens",
 		inputs: [],
 	},
-];
+] as const;

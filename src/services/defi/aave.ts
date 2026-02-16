@@ -11,7 +11,7 @@ import {
 	erc20Abi,
 } from "viem";
 import { base } from "viem/chains";
-import { RPC_URLS } from "../chain/constants.js";
+import { SUPPORTED_CHAINS } from "../chain/constants.js";
 import { POOL_ADDRESSES_PROVIDER_ABI, POOL_ABI, WETH_ABI } from "./abi/aave.js";
 import {
 	AAVE_V3_POOL_ADDRESSES_PROVIDER,
@@ -20,6 +20,7 @@ import {
 	MAX_UINT256,
 } from "./constants.js";
 import { NonceManager } from "../chain/nonceManager.js";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 
 export interface UserAccountData {
 	totalCollateralUSD: string;
@@ -39,7 +40,7 @@ export class AaveService {
 	constructor(walletClient?: WalletClient) {
 		this.publicClient = createPublicClient({
 			chain: base,
-			transport: http(RPC_URLS.base),
+			transport: http(SUPPORTED_CHAINS.base.rpcUrl),
 		}) as PublicClient;
 
 		if (walletClient) {
@@ -213,7 +214,6 @@ export class AaveService {
 
 		// Simulate first to catch errors
 		let request;
-		// Simulate first to catch errors
 		try {
 			const result = await this.publicClient.simulateContract({
 				address: poolAddress,
@@ -250,7 +250,10 @@ export class AaveService {
 					}
 				}
 
-				throw new Error(`Cannot withdraw: ${details} (Try repaying all debt first)`);
+				throw new FibxError(
+					ErrorCode.WALLET_ERROR,
+					`Cannot withdraw: ${details} (Try repaying all debt first)`
+				);
 			}
 			throw error;
 		}
@@ -275,7 +278,6 @@ export class AaveService {
 
 		// Simulate first to catch errors
 		let request;
-		// Simulate first to catch errors
 		try {
 			const result = await this.publicClient.simulateContract({
 				address: poolAddress,
@@ -298,7 +300,8 @@ export class AaveService {
 				err.message?.includes("HealthFactorLowerThanLiquidationThreshold") ||
 				err.cause?.message?.includes("0x6679996d")
 			) {
-				throw new Error(
+				throw new FibxError(
+					ErrorCode.WALLET_ERROR,
 					"Cannot borrow: This amount would lower your Health Factor below 1.0 (Liquidation Threshold). Try borrowing a smaller amount or adding more collateral first."
 				);
 			}
@@ -373,7 +376,10 @@ export class AaveService {
 
 	private ensureWalletConnection() {
 		if (!this.walletClient || !this.account) {
-			throw new Error("Wallet not connected. Please login or provide a PRIVATE_KEY.");
+			throw new FibxError(
+				ErrorCode.WALLET_ERROR,
+				"Wallet not connected. Please login or provide a PRIVATE_KEY."
+			);
 		}
 	}
 

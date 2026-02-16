@@ -1,4 +1,4 @@
-import type { Abi } from "viem";
+import { ErrorCode, FibxError } from "../../lib/errors.js";
 import { type Chain, defineChain } from "viem";
 import { base } from "viem/chains";
 import { baseRouterAbi } from "../fibrous/abi/base.js";
@@ -64,7 +64,11 @@ export interface ChainConfig {
 	rpcUrl: string;
 	nativeTokenAddress: string;
 	fibrousNetwork: string;
-	routerAbi: Abi;
+	routerAbi:
+		| typeof baseRouterAbi
+		| typeof citreaRouterAbi
+		| typeof hyperevmRouterAbi
+		| typeof monadRouterAbi;
 }
 
 export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
@@ -75,7 +79,7 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		rpcUrl: "https://mainnet.base.org",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "base",
-		routerAbi: baseRouterAbi as Abi,
+		routerAbi: baseRouterAbi,
 	},
 	citrea: {
 		id: 4114,
@@ -84,7 +88,7 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		rpcUrl: "https://rpc.mainnet.citrea.xyz",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "citrea",
-		routerAbi: citreaRouterAbi as Abi,
+		routerAbi: citreaRouterAbi,
 	},
 	hyperevm: {
 		id: 999,
@@ -93,7 +97,7 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		rpcUrl: "https://rpc.hyperliquid.xyz/evm",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "hyperevm",
-		routerAbi: hyperevmRouterAbi as Abi,
+		routerAbi: hyperevmRouterAbi,
 	},
 	monad: {
 		id: 143,
@@ -102,22 +106,18 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		rpcUrl: "https://rpc-mainnet.monadinfra.com",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		fibrousNetwork: "monad",
-		routerAbi: monadRouterAbi as Abi,
+		routerAbi: monadRouterAbi,
 	},
-};
-
-export const RPC_URLS = {
-	base: "https://mainnet.base.org",
-	citrea: "https://rpc.mainnet.citrea.xyz",
-	hyperevm: "https://rpc.hyperliquid.xyz/evm",
-	monad: "https://rpc-mainnet.monadinfra.com",
 };
 
 export function getChainConfig(network: string): ChainConfig {
 	const config = SUPPORTED_CHAINS[network];
 	if (!config) {
 		const supported = Object.keys(SUPPORTED_CHAINS).join(", ");
-		throw new Error(`Unsupported chain: ${network}. Supported: ${supported}`);
+		throw new FibxError(
+			ErrorCode.UNSUPPORTED_CHAIN,
+			`Unsupported chain: ${network}. Supported: ${supported}`
+		);
 	}
 	return config;
 }

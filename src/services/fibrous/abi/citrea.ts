@@ -986,4 +986,4 @@ export const citreaRouterAbi = [
 		name: "TooManyTokens",
 		inputs: [],
 	},
-];
+] as const;

@@ -9,13 +9,15 @@ export enum ErrorCode {
 	PRIVY_ERROR = "PRIVY_ERROR",
 	FIBROUS_ERROR = "FIBROUS_ERROR",
 	SESSION_ERROR = "SESSION_ERROR",
+	UNSUPPORTED_CHAIN = "UNSUPPORTED_CHAIN",
+	WALLET_ERROR = "WALLET_ERROR",
 }
 
 export class FibxError extends Error {
 	public readonly code: ErrorCode;
 
-	constructor(code: ErrorCode, message: string) {
-		super(message);
+	constructor(code: ErrorCode, message: string, options?: { cause?: unknown }) {
+		super(message, options);
 		this.name = "FibxError";
 		this.code = code;
 	}

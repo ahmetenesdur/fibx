@@ -986,4 +986,4 @@ export const monadRouterAbi = [
 		name: "TooManyTokens",
 		inputs: [],
 	},
-];
+] as const;

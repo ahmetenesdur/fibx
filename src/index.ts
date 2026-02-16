@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { Command } from "commander";
+import { outputError } from "./lib/format.js";
 import { statusCommand } from "./commands/trade/status.js";
 import { authLoginCommand } from "./commands/auth/login.js";
 import { authVerifyCommand } from "./commands/auth/verify.js";
@@ -18,9 +19,10 @@ const program = new Command();
 program
 	.name("fibx")
 	.description("Fibrous DeFi CLI — wallet, transfer, swap")
-	.version("0.2.4")
+	.version("0.2.5")
 	.option("-c, --chain <chain>", "Chain to use (base, citrea, hyperevm, monad)", "base")
-	.option("--json", "Output results as JSON", false);
+	.option("--json", "Output results as JSON", false)
+	.showHelpAfterError();
 
 const auth = program.command("auth").description("Authentication commands");
 
@@ -131,4 +133,6 @@ program
 		await aaveCommand(action, amount, token, { ...globalOpts, json: globalOpts.json });
 	});
 
-program.parseAsync();
+program.parseAsync().catch((error: unknown) => {
+	outputError(error, program.opts().json);
+});
