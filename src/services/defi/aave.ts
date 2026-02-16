@@ -117,6 +117,7 @@ export class AaveService {
 				nonce: nonceApprove,
 			});
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
+			await this.waitForAllowance(tokenAddress, poolAddress, amount);
 		}
 
 		const { request: supplyRequest } = await this.publicClient.simulateContract({
@@ -341,6 +342,7 @@ export class AaveService {
 				nonce: nonceApprove,
 			});
 			await this.publicClient.waitForTransactionReceipt({ hash: txApprove });
+			await this.waitForAllowance(tokenAddress, poolAddress, amount);
 		}
 
 		const { request: repayRequest } = await this.publicClient.simulateContract({
@@ -378,5 +380,27 @@ export class AaveService {
 			abi: erc20Abi,
 			functionName: "decimals",
 		});
+	}
+
+	private async waitForAllowance(
+		tokenAddress: Address,
+		spender: Address,
+		targetAmount: bigint
+	): Promise<void> {
+		let retries = 0;
+		const maxRetries = 15; // 30 seconds
+		while (retries < maxRetries) {
+			const allowance = await this.publicClient.readContract({
+				address: tokenAddress,
+				abi: erc20Abi,
+				functionName: "allowance",
+				args: [this.account!.address, spender],
+			});
+			if (allowance >= targetAmount) {
+				break;
+			}
+			await new Promise((resolve) => setTimeout(resolve, 2000));
+			retries++;
+		}
 	}
 }

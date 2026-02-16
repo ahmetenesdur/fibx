@@ -89,6 +89,23 @@ export async function tradeCommand(
 							confirmations: 1,
 						});
 
+						// Wait for allowance to be updated on-chain (handle RPC lag)
+						let retries = 0;
+						const maxRetries = 15; // 30 seconds max
+						while (retries < maxRetries) {
+							const newAllowance = await getAllowance(
+								publicClient,
+								tokenIn.address as Address,
+								wallet,
+								routerAddress
+							);
+							if (newAllowance >= amountToApprove) {
+								break;
+							}
+							await new Promise((resolve) => setTimeout(resolve, 2000));
+							retries++;
+						}
+
 						return approveTxHash;
 					},
 					opts
