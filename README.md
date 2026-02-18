@@ -45,6 +45,21 @@ Use `-c` or `--chain` to specify the target chain. Default is `base`.
 
 Supported: `base`, `citrea`, `hyperevm`, `monad`
 
+### Configuration
+
+You can configure custom RPC URLs to avoid rate limits on public endpoints.
+
+```bash
+# Set a custom RPC URL for a chain
+npx fibx config set-rpc base https://mainnet.base.org
+
+# View current RPC URL
+npx fibx config get-rpc base
+
+# List all custom configurations
+npx fibx config list
+```
+
 ### Balance
 
 ```bash

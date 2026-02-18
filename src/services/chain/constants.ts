@@ -79,7 +79,7 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 		name: "base",
 		nativeSymbol: "ETH",
 		viemChain: base,
-		rpcUrl: "https://base-mainnet.g.alchemy.com/v2/HS1IllSiv9K4CdUscjskG-s_jvBeSm3e",
+		rpcUrl: "https://mainnet.base.org",
 		nativeTokenAddress: "0x0000000000000000000000000000000000000000",
 		wrappedNativeAddress: "0x4200000000000000000000000000000000000006",
 		fibrousNetwork: "base",
@@ -120,6 +120,8 @@ export const SUPPORTED_CHAINS: Record<string, ChainConfig> = {
 	},
 };
 
+import { configService } from "../config/config.js";
+
 export function getChainConfig(network: string): ChainConfig {
 	const config = SUPPORTED_CHAINS[network];
 	if (!config) {
@@ -129,5 +131,15 @@ export function getChainConfig(network: string): ChainConfig {
 			`Unsupported chain: ${network}. Supported: ${supported}`
 		);
 	}
+
+	// Override RPC URL if custom config exists
+	const customRpc = configService.getRpcUrl(network);
+	if (customRpc) {
+		return {
+			...config,
+			rpcUrl: customRpc,
+		};
+	}
+
 	return config;
 }

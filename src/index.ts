@@ -12,14 +12,14 @@ import { tradeCommand } from "./commands/trade/swap.js";
 import { walletsCommand } from "./commands/wallet/list.js";
 import { txStatusCommand } from "./commands/chain/transaction.js";
 import { aaveCommand } from "./commands/defi/aave.js";
+import { registerConfigCommands } from "./commands/config/index.js";
 import { logoutCommand } from "./commands/auth/logout.js";
 
 const program = new Command();
 
+program.name("fibx").description("Fibrous DeFi CLI — wallet, transfer, swap").version("0.3.5");
+registerConfigCommands(program);
 program
-	.name("fibx")
-	.description("Fibrous DeFi CLI — wallet, transfer, swap")
-	.version("0.3.5")
 	.option("-c, --chain <chain>", "Chain to use (base, citrea, hyperevm, monad)", "base")
 	.option("--json", "Output results as JSON", false)
 	.showHelpAfterError();
