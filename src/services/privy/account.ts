@@ -22,12 +22,14 @@ export function toPrivyViemAccount(token: string, walletId: string, address: str
 				value: txParams.value != null ? toHex(txParams.value as bigint) : undefined,
 				nonce: txParams.nonce != null ? toHex(txParams.nonce as number) : undefined,
 				gas_limit: txParams.gas != null ? toHex(txParams.gas as bigint) : undefined,
-				max_fee_per_gas: txParams.maxFeePerGas
-					? toHex(txParams.maxFeePerGas as bigint)
-					: undefined,
-				max_priority_fee_per_gas: txParams.maxPriorityFeePerGas
-					? toHex(txParams.maxPriorityFeePerGas as bigint)
-					: undefined,
+				max_fee_per_gas:
+					txParams.maxFeePerGas != null
+						? toHex(txParams.maxFeePerGas as bigint)
+						: undefined,
+				max_priority_fee_per_gas:
+					txParams.maxPriorityFeePerGas != null
+						? toHex(txParams.maxPriorityFeePerGas as bigint)
+						: undefined,
 				type:
 					txParams.type === "eip1559"
 						? 2
