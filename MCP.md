@@ -42,9 +42,9 @@ Add to `claude_desktop_config.json`:
 }
 ```
 
-### Windsurf
+### Antigravity
 
-Add to your MCP configuration:
+Add to `~/.gemini/antigravity/mcp_config.json`:
 
 ```json
 {
@@ -150,36 +150,6 @@ Output: { action, amount, token, txHash, chain }
 ```
 
 **Example prompt:** "Supply 0.5 ETH to Aave" or "Repay max USDC on Aave"
-
-## Architecture
-
-```
-AI Editor (Cursor, Claude Desktop, ...)
-    │
-    │  stdio (JSON-RPC)
-    ▼
-fibx mcp-start
-    │
-    ├── tools.ts      → Tool definitions, schemas, annotations
-    ├── handlers.ts   → Service-layer bridges (no CLI dependencies)
-    └── server.ts     → McpServer + StdioServerTransport
-```
-
-- **tools.ts** registers each tool with Zod input/output schemas and MCP annotations (`readOnlyHint`, `destructiveHint`)
-- **handlers.ts** calls the same service functions as the CLI but returns typed objects instead of printing to stdout
-- **server.ts** wires everything together with `StdioServerTransport`
-
-All errors are caught and returned as `isError: true` responses rather than crashing the connection.
-
-## Testing with MCP Inspector
-
-You can test the MCP server interactively using the official inspector:
-
-```bash
-npx @modelcontextprotocol/inspector node dist/index.js mcp-start
-```
-
-This opens a web UI where you can list tools, call them with custom arguments, and inspect responses.
 
 ## Supported Chains
 
