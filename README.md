@@ -10,6 +10,7 @@ A command-line tool for DeFi operations on **Base, Citrea, HyperEVM, and Monad**
 - **Token Swaps**: Optimal routing via Fibrous aggregation with auto-slippage
 - **Transfers**: Send ETH or any ERC-20 token
 - **Aave V3**: Supply, borrow, repay, and withdraw on Base
+- **MCP Server**: Built-in AI agent integration for Cursor, Claude Desktop, and Windsurf
 - **Privy Server Wallets**: Secure server-side signing
 - **Private Key Import**: Use an existing wallet for local execution
 - **Simulation**: All transactions are simulated before execution
@@ -116,6 +117,16 @@ npx fibx aave withdraw max ETH     # Withdraws WETH and auto-unwraps to ETH
 
 > **Note:** `supply`, `repay`, and `withdraw` support automatic **ETH <-> WETH** wrapping/unwrapping on Base.
 
-## Agent Skills
+## AI Agent Integration
 
-For AI agent integration, see the [fibx-skills](https://github.com/Fibrous-Finance/fibx-skills) directory.
+### MCP Server
+
+fibx includes a built-in MCP server for AI editors like Cursor, Claude Desktop, and Windsurf. See [MCP.md](MCP.md) for setup and usage.
+
+```bash
+npx fibx mcp-start
+```
+
+### Agent Skills
+
+For prompt-based agent integration, see the [fibx-skills](https://github.com/Fibrous-Finance/fibx-skills) directory.

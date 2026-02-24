@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
+import { createRequire } from "node:module";
 import { Command } from "commander";
+import chalk from "chalk";
 import { outputError } from "./lib/format.js";
 import { statusCommand } from "./commands/trade/status.js";
 import { authLoginCommand } from "./commands/auth/login.js";
@@ -15,9 +17,26 @@ import { aaveCommand } from "./commands/defi/aave.js";
 import { registerConfigCommands } from "./commands/config/index.js";
 import { logoutCommand } from "./commands/auth/logout.js";
 
+const require = createRequire(import.meta.url);
+const { version } = require("../package.json") as { version: string };
+
 const program = new Command();
 
-program.name("fibx").description("Fibrous DeFi CLI — wallet, transfer, swap").version("0.3.7");
+const banner = `
+${chalk.hex("#11B2BA").bold("  _____ _ _         ")}
+${chalk.hex("#11B2BA").bold(" |  ___(_) |____  __")}
+${chalk.hex("#11B2BA").bold(" | |_  | | '_ \\ \\/ /")}
+${chalk.hex("#11B2BA").bold(" |  _| | | |_) >  < ")}
+${chalk.hex("#11B2BA").bold(" |_|   |_|_.__/_/\\_\\")}
+`;
+
+program
+	.name("fibx")
+	.description(
+		"A powerful CLI for DeFi operations across Base, Citrea, HyperEVM, and Monad. Powered by Fibrous."
+	)
+	.version(version);
+program.addHelpText("beforeAll", banner);
 registerConfigCommands(program);
 program
 	.option("-c, --chain <chain>", "Chain to use (base, citrea, hyperevm, monad)", "base")
@@ -131,6 +150,14 @@ program
 	.action(async (action, amount, token, _opts, cmd) => {
 		const globalOpts = cmd.parent!.opts();
 		await aaveCommand(action, amount, token, { ...globalOpts, json: globalOpts.json });
+	});
+
+program
+	.command("mcp-start")
+	.description("Start MCP (Model Context Protocol) server for AI agent integration")
+	.action(async () => {
+		const { startMcpServer } = await import("./mcp/server.js");
+		await startMcpServer();
 	});
 
 program.parseAsync().catch((error: unknown) => {
