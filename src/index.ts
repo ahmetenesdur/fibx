@@ -143,6 +143,15 @@ program
 	});
 
 program
+	.command("portfolio")
+	.description("Show cross-chain portfolio with USD values")
+	.action(async (_opts, cmd) => {
+		const globalOpts = cmd.parent!.opts();
+		const { portfolioCommand } = await import("./commands/portfolio/index.js");
+		await portfolioCommand({ json: !!globalOpts.json });
+	});
+
+program
 	.command("aave")
 	.description("Aave V3 operations (Base only)")
 	.argument("<action>", "Action: status, supply, borrow, repay, withdraw")

@@ -8,6 +8,7 @@ export interface Token {
 	address: string;
 	decimals: number;
 	symbol: string;
+	price?: string;
 }
 
 export type TokenMap = Record<string, Token>;

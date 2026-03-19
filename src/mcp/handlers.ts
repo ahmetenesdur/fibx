@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import type { Portfolio } from "../services/portfolio/portfolio.js";
 import { loadSession, requireSession } from "../services/auth/session.js";
 import { getChainConfig, SUPPORTED_CHAINS } from "../services/chain/constants.js";
 import { getPublicClient, getWalletClient } from "../services/chain/client.js";
@@ -526,4 +527,9 @@ export async function handleConfigAction(
 
 	configService.setRpcUrl(chain, url);
 	return { action, chain, url };
+}
+
+export async function handleGetPortfolio(): Promise<Portfolio> {
+	const { getPortfolio } = await import("../services/portfolio/portfolio.js");
+	return getPortfolio();
 }

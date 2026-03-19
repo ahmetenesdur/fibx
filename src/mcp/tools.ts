@@ -9,6 +9,7 @@ import {
 	handleAaveAction,
 	handleGetAuthStatus,
 	handleConfigAction,
+	handleGetPortfolio,
 } from "./handlers.js";
 
 const ChainEnum = z.enum(["base", "citrea", "hyperevm", "monad"]);
@@ -275,5 +276,22 @@ export function registerAllTools(server: McpServer): void {
 			},
 		},
 		async ({ action, chain, url }) => safeToolCall(() => handleConfigAction(action, chain, url))
+	);
+
+	server.registerTool(
+		"get_portfolio",
+		{
+			title: "Cross-Chain Portfolio",
+			description:
+				"Get a complete cross-chain portfolio overview with USD valuations for all token holdings across Base, Citrea, HyperEVM, and Monad. Includes DeFi positions (Aave V3). Returns total net worth.",
+			inputSchema: {},
+			annotations: {
+				title: "Portfolio Overview",
+				readOnlyHint: true,
+				destructiveHint: false,
+				openWorldHint: true,
+			},
+		},
+		async () => safeToolCall(() => handleGetPortfolio())
 	);
 }
