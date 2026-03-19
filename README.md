@@ -7,6 +7,7 @@ A command-line tool for DeFi operations on **Base, Citrea, HyperEVM, and Monad**
 ## Features
 
 - **Multi-Chain Support**: Base, Citrea, HyperEVM, and Monad
+- **Portfolio**: Cross-chain portfolio overview with USD valuations and DeFi positions
 - **Token Swaps**: Optimal routing via Fibrous aggregation with auto-slippage
 - **Transfers**: Send ETH or any ERC-20 token
 - **Aave V3**: Supply, borrow, repay, and withdraw on Base
@@ -77,6 +78,17 @@ npx fibx auth logout
 npx fibx balance
 npx fibx balance --chain citrea
 ```
+
+### Portfolio
+
+Consolidated cross-chain portfolio view with USD valuations:
+
+```bash
+npx fibx portfolio           # Table output across all chains
+npx fibx portfolio --json    # Structured JSON for scripting
+```
+
+Shows all token holdings across Base, Citrea, HyperEVM, and Monad with USD values. Includes DeFi positions (Aave V3 collateral/debt) and total portfolio net worth. Token prices are sourced live from Fibrous.
 
 ### Send
 

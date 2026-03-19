@@ -72,12 +72,13 @@ Add to `~/.gemini/antigravity/mcp_config.json`:
 
 ### Read-Only
 
-| Tool              | Description                          |
-| ----------------- | ------------------------------------ |
-| `get_auth_status` | Check session and Fibrous API health |
-| `get_balance`     | Get native and ERC-20 token balances |
-| `get_tx_status`   | Check transaction receipt and status |
-| `get_aave_status` | Get Aave V3 position health on Base  |
+| Tool              | Description                                                  |
+| ----------------- | ------------------------------------------------------------ |
+| `get_auth_status` | Check session and Fibrous API health                         |
+| `get_balance`     | Get native and ERC-20 token balances                         |
+| `get_portfolio`   | Cross-chain portfolio with USD valuations and DeFi positions |
+| `get_tx_status`   | Check transaction receipt and status                         |
+| `get_aave_status` | Get Aave V3 position health on Base                          |
 
 ### Transactional
 
@@ -114,6 +115,21 @@ Fetch all token balances for the active wallet. Only returns non-zero balances.
 Input:  { chain?: "base" | "citrea" | "hyperevm" | "monad" }
 Output: { wallet, chain, balances: { "ETH": "0.5", "USDC": "100.0", ... } }
 ```
+
+### get_portfolio
+
+Get a consolidated portfolio across all chains with USD-valued token holdings and DeFi positions.
+
+```
+Input:  {}
+Output: {
+  wallet, totalUsd,
+  chains: [{ chain, totalUsd, assets: [{ symbol, balance, price, usdValue }] }],
+  defi: [{ protocol, chain, collateralUsd, debtUsd, healthFactor, netUsd }]
+}
+```
+
+**Example prompt:** "Show me my portfolio" or "What's my total net worth across all chains?"
 
 ### swap_tokens
 
