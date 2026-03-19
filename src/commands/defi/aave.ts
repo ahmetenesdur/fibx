@@ -26,7 +26,6 @@ export const aaveCommand = async (
 	const spinner = ora("Initializing Aave service...").start();
 
 	try {
-		// Aave V3 is currently Base-only
 		const chainConfig = getChainConfig("base");
 
 		const aave = new AaveService(chainConfig);
@@ -34,7 +33,7 @@ export const aaveCommand = async (
 		try {
 			await attemptSessionLogin(aave, chainConfig);
 		} catch {
-			// Ignore if no session; read-only mode works without it
+			// No session = read-only
 		}
 
 		const userAddress = aave.getAccountAddress();
@@ -132,7 +131,7 @@ async function attemptSessionLogin(aave: AaveService, chainConfig: ChainConfig) 
 			aave.setWalletClient(walletClient);
 		}
 	} catch {
-		// Session load failed, ignore
+		// No session
 	}
 }
 
@@ -179,10 +178,8 @@ async function handleSupply(
 	chainConfig: ChainConfig,
 	spinner: Ora,
 	opts: GlobalOptions,
-	isNativeETH: boolean = false
+	_isNativeETH: boolean = false
 ) {
-	// If native ETH, allow service to handle auto-wrap (token is already resolved to WETH address)
-
 	const txHash = await aave.supplyWithAutoWrap(token.address as Address, amount, (status) => {
 		spinner.text = status;
 	});
@@ -257,7 +254,6 @@ async function handleWithdraw(
 	opts: GlobalOptions,
 	isNativeETH: boolean = false
 ) {
-	// Delegate to service
 	const txHash = await aave.withdrawWithAutoUnwrap(
 		token.address as Address,
 		amount,

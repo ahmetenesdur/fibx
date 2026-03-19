@@ -8,14 +8,12 @@ export async function authVerifyCommand(
 	opts: OutputOptions
 ): Promise<void> {
 	try {
-		// 1. Verify OTP + provision wallet via backend
 		const result = await withSpinner(
 			"Verifying OTP...",
 			async () => apiVerify(email, code),
 			opts
 		);
 
-		// 2. Save session locally (store backend JWT instead of Privy token)
 		await saveSession({
 			userId: result.userId,
 			walletId: result.walletId,

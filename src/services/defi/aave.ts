@@ -101,7 +101,7 @@ export class AaveService {
 			args: [userAddress],
 		});
 
-		// Aave V3 getUserAccountData returns values in Base Currency (USD, 8 decimals)
+		// Values in Base Currency (USD, 8 decimals)
 		return {
 			totalCollateralUSD: formatUnits(data[0], 8),
 			totalDebtUSD: formatUnits(data[1], 8),
@@ -320,7 +320,6 @@ export class AaveService {
 			amount = parseUnits(amountStr, decimals);
 		}
 
-		// Check Allowance & Approve if necessary
 		const allowance = await this.publicClient.readContract({
 			address: tokenAddress,
 			abi: erc20Abi,
@@ -375,13 +374,12 @@ export class AaveService {
 			return txRepay;
 		} catch (error: unknown) {
 			const err = error as Error & { cause?: { message?: string } };
-			// Check for NoDebtOfSelectedType (0xf0788fb2)
+			// NoDebtOfSelectedType (0xf0788fb2) = already debt-free
 			if (
 				err.message?.includes("NoDebtOfSelectedType") ||
 				err.cause?.message?.includes("0xf0788fb2")
 			) {
-				// This is actually a success state for "repay max" - we are already debt free
-				return "0x0" as Hash; // Return dummy hash to indicate success without tx
+				return "0x0" as Hash;
 			}
 			throw error;
 		}
@@ -394,7 +392,6 @@ export class AaveService {
 				"Wallet not connected. Please login or provide a PRIVATE_KEY."
 			);
 		}
-		// Ensure NonceManager is initialized with current account
 		await NonceManager.getInstance().init(this.account.address, this.publicClient);
 	}
 
@@ -406,9 +403,7 @@ export class AaveService {
 		});
 	}
 
-	/**
-	 * High-level method to repay debt, automatically wrapping ETH if needed.
-	 */
+	// Repay with auto ETH wrapping if needed.
 	public async repayWithAutoWrap(
 		tokenAddress: Address,
 		amountStr: string,
@@ -429,7 +424,7 @@ export class AaveService {
 		const decimals = await this.getTokenDecimals(tokenAddress);
 
 		if (amountStr === "-1" || amountStr.toLowerCase() === "max") {
-			// Add 0.1% buffer for interest to ensure full repayment
+			// 0.1% buffer for accrued interest
 			const interestBuffer = currentDebt / 1000n;
 			const safeMax = currentDebt + interestBuffer;
 			amountToRepay = safeMax;
@@ -502,9 +497,7 @@ export class AaveService {
 		return stableDebt + variableDebt;
 	}
 
-	/**
-	 * High-level method to supply assets, automatically wrapping ETH if needed.
-	 */
+	// Supply with auto ETH wrapping if needed.
 	public async supplyWithAutoWrap(
 		tokenAddress: Address,
 		amountStr: string,
@@ -515,7 +508,6 @@ export class AaveService {
 		const decimals = await this.getTokenDecimals(tokenAddress);
 		const amount = parseUnits(amountStr, decimals);
 
-		// 1. Balance Check
 		if (onStatus) onStatus("Checking balance...");
 
 		const tokenBalance = await this.publicClient.readContract({
@@ -561,9 +553,7 @@ export class AaveService {
 		return await this.supply(tokenAddress, amountStr);
 	}
 
-	/**
-	 * High-level method to withdraw assets, optionally unwrapping WETH to ETH.
-	 */
+	// Withdraw with optional WETH → ETH unwrapping.
 	public async withdrawWithAutoUnwrap(
 		tokenAddress: Address,
 		amountStr: string,
@@ -606,7 +596,7 @@ export class AaveService {
 	): Promise<string[]> {
 		const debtDetails: string[] = [];
 
-		// Batch fetch all reserve data using multicall
+		// Multicall: batch fetch all reserve data
 		const reserveDataCalls = reserves.map((asset) => ({
 			address: dataProviderAddress,
 			abi: POOL_DATA_PROVIDER_ABI,
@@ -670,7 +660,7 @@ export class AaveService {
 				}
 			} catch (error) {
 				console.warn("Failed to fetch debt token details via multicall:", error);
-				// Fallback: just list addresses and raw amounts
+				// Fallback: list addresses with raw amounts
 				assetsWithDebt.forEach((asset, i) => {
 					debtDetails.push(`${asset}: raw units ${debts[i]}`);
 				});
@@ -691,7 +681,7 @@ export class AaveService {
 		) {
 			let details = "This amount would lower your Health Factor below 1.0.";
 
-			// Check for cross-asset dust debt
+			// Check cross-asset dust debt
 			if (totalDebt > 0) {
 				try {
 					const poolContract = {
@@ -714,14 +704,13 @@ export class AaveService {
 							", "
 						)}. You must repay these debts first to withdraw max collateral.`;
 					} else if (totalDebt < 0.01) {
-						// If scanning returned nothing but we have dust debt, show generic message
 						details = `You have tiny "dust" debt ($${totalDebt.toFixed(
 							6
 						)}) in an asset (scan failed to identify) preventing full withdrawal.`;
 					}
 				} catch (error) {
 					console.error("Error scanning debts:", error);
-					// Fallback if scanning fails
+					// Fallback
 					if (totalDebt < 0.01) {
 						details = `You have tiny "dust" debt ($${totalDebt.toFixed(
 							6

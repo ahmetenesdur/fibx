@@ -75,10 +75,7 @@ export async function getAllowance(
 	});
 }
 
-/**
- * Polls on-chain allowance until it reaches the target amount.
- * Used after an approval tx to handle RPC propagation lag.
- */
+// Polls allowance until it reaches the target amount (handles RPC propagation lag).
 export async function waitForAllowance(
 	client: PublicClient,
 	tokenAddress: Address,

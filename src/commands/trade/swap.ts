@@ -125,7 +125,6 @@ export async function tradeCommand(
 							confirmations: 1,
 						});
 
-						// Wait for allowance to be updated on-chain (handle RPC lag)
 						await waitForAllowance(
 							publicClient,
 							tokenIn.address as Address,

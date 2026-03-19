@@ -18,7 +18,6 @@ export function getWalletClient(session: Session, chain: ChainConfig) {
 	if (session.type === "private-key" && session.privateKey) {
 		account = privateKeyToAccount(session.privateKey as `0x${string}`);
 	} else {
-		// Privy session: use backend-backed signing via JWT
 		const token = session.userJwt;
 		if (!token) throw new Error("Session JWT required for privy session type");
 		const walletId = session.walletId;

@@ -42,7 +42,7 @@ export class ConfigService {
 				return result.data;
 			}
 		} catch {
-			// Ignore read errors, return default
+			// noop
 		}
 		return { rpcUrls: {} };
 	}

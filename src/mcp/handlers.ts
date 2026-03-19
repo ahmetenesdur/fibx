@@ -102,7 +102,7 @@ export async function handleSwapTokens(
 	const isWrappedOutput =
 		tokenOut.address.toLowerCase() === chainConfig.wrappedNativeAddress.toLowerCase();
 
-	// Handle native → wrapped (wrap)
+	// Wrap: native → wrapped
 	if (isNativeInput && isWrappedOutput) {
 		const data = encodeDeposit();
 		const hash = await walletClient.sendTransaction({
@@ -121,7 +121,7 @@ export async function handleSwapTokens(
 		};
 	}
 
-	// Handle wrapped → native (unwrap)
+	// Unwrap: wrapped → native
 	if (isWrappedInput && isNativeOutput) {
 		const data = encodeWithdraw(amountBaseUnits);
 		const hash = await walletClient.sendTransaction({
@@ -153,7 +153,6 @@ export async function handleSwapTokens(
 
 	const routerAddress = routeData.router_address as Address;
 
-	// ERC-20 approval
 	if (!isNativeInput) {
 		const currentAllowance = await getAllowance(
 			publicClient,
@@ -175,7 +174,6 @@ export async function handleSwapTokens(
 				confirmations: 1,
 			});
 
-			// Wait for on-chain allowance update
 			await waitForAllowance(
 				publicClient,
 				tokenIn.address as Address,
@@ -186,7 +184,6 @@ export async function handleSwapTokens(
 		}
 	}
 
-	// Simulate & execute swap
 	const swapData = encodeSwapCalldata(routeData.calldata, chainConfig);
 	const value = isNativeInput ? amountBaseUnits : 0n;
 
@@ -268,7 +265,6 @@ export async function handleSendTokens(
 		};
 	}
 
-	// ERC-20 transfer
 	const resolved = await resolveToken(token!, chainConfig);
 	const amountBaseUnits = parseAmount(amount, resolved.decimals);
 
@@ -340,7 +336,7 @@ export async function handleGetAaveStatus(): Promise<AaveStatusResult> {
 		const walletClient = getWalletClient(session, chainConfig);
 		aave.setWalletClient(walletClient);
 	} catch {
-		// Read-only mode
+		// Read-only
 	}
 
 	const userAddress = session.walletAddress as Address;
@@ -371,7 +367,7 @@ export async function handleAaveAction(
 	const session = requireSession();
 	const chainConfig = getChainConfig("base");
 
-	// Normalize "max" to "-1" (Aave service convention)
+	// "max" → "-1" (Aave convention)
 	const isMax = amount.toLowerCase() === "max" || amount === "-1";
 	const normalizedAmount = isMax ? "-1" : amount;
 

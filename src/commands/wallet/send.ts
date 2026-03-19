@@ -43,7 +43,6 @@ export async function sendCommand(
 			txHash = await withSpinner(
 				`Sending ${amount} ${resolvedSymbol} on ${chain.name}...`,
 				async () => {
-					// Simulate ETH send (estimateGas)
 					try {
 						await publicClient.estimateGas({
 							account: wallet,

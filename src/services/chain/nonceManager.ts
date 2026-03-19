@@ -17,7 +17,6 @@ export class NonceManager {
 	}
 
 	public async init(address: Address, publicClient: PublicClient) {
-		// Only re-initialize if address changes or not initialized
 		if (this.address !== address || this.nonce === null) {
 			this.address = address;
 			this.nonce = await publicClient.getTransactionCount({ address });
@@ -32,8 +31,6 @@ export class NonceManager {
 			);
 		}
 
-		// Simple mutex to ensure sequential access if needed, though JS is single-threaded
-		// this helps if we add async logic inside the critical section later.
 		let releaseStr: () => void;
 		const lock = new Promise<void>((resolve) => {
 			releaseStr = resolve;

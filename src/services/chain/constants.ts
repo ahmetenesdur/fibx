@@ -131,7 +131,6 @@ export function getChainConfig(network: string): ChainConfig {
 		);
 	}
 
-	// Override RPC URL if custom config exists
 	const customRpc = configService.getRpcUrl(network);
 	if (customRpc) {
 		return {

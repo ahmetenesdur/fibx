@@ -2,10 +2,7 @@ import { toHex, type Address } from "viem";
 import { toAccount } from "viem/accounts";
 import { apiSignTransaction, apiSignMessage, apiSignTypedData } from "../api/client.js";
 
-/**
- * Creates a Viem-compatible account adapter that signs via fibx-server backend.
- * Uses viem's toAccount() for type-safe Account creation.
- */
+// Creates a viem Account adapter that signs via fibx-server backend.
 export function toPrivyViemAccount(token: string, walletId: string, address: string) {
 	return toAccount({
 		address: address as Address,
@@ -39,7 +36,6 @@ export function toPrivyViemAccount(token: string, walletId: string, address: str
 									: undefined,
 			};
 
-			// Strip undefined values before sending to Privy API
 			const cleanTx = Object.fromEntries(
 				Object.entries(privyTx).filter(([, v]) => v !== undefined)
 			);

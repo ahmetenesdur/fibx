@@ -1,7 +1,6 @@
 import { parseUnits, formatUnits } from "viem";
 
 export function parseAmount(amount: string, decimals: number): bigint {
-	// Remove "$" and commas
 	const cleanAmount = amount.replace(/[$,]/g, "");
 	return parseUnits(cleanAmount, decimals);
 }

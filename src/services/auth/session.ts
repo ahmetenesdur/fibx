@@ -52,6 +52,6 @@ export function clearSession(): void {
 	try {
 		unlinkSync(getSessionPath());
 	} catch {
-		// Already cleared
+		// noop
 	}
 }
