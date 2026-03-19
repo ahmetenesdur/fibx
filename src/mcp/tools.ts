@@ -257,9 +257,11 @@ export function registerAllTools(server: McpServer): void {
 		{
 			title: "Manage RPC Configuration",
 			description:
-				"View and modify fibx RPC configuration. Use 'set-rpc' to set a custom RPC URL for a chain (helps avoid rate limits), 'get-rpc' to view the current RPC for a chain, or 'list' to show all custom RPC settings.",
+				"View and modify fibx RPC configuration. Use 'set-rpc' to set a custom RPC URL for a chain (helps avoid rate limits), 'get-rpc' to view the current RPC for a chain, 'reset-rpc' to reset a chain's RPC to default (omit chain to reset all), or 'list' to show all custom RPC settings.",
 			inputSchema: {
-				action: z.enum(["set-rpc", "get-rpc", "list"]).describe("Config action to perform"),
+				action: z
+					.enum(["set-rpc", "get-rpc", "reset-rpc", "list"])
+					.describe("Config action to perform"),
 				chain: ChainEnum.optional().describe(
 					"Target chain (required for set-rpc and get-rpc)"
 				),

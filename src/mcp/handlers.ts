@@ -440,7 +440,7 @@ export interface ConfigResult {
 }
 
 export async function handleConfigAction(
-	action: "set-rpc" | "get-rpc" | "list",
+	action: "set-rpc" | "get-rpc" | "reset-rpc" | "list",
 	chain?: string,
 	url?: string
 ): Promise<ConfigResult> {
@@ -449,6 +449,20 @@ export async function handleConfigAction(
 	if (action === "list") {
 		const config = configService.getConfig();
 		return { action, rpcUrls: config.rpcUrls };
+	}
+
+	if (action === "reset-rpc") {
+		if (chain) {
+			if (!SUPPORTED_CHAINS[chain]) {
+				throw new Error(
+					`Unsupported chain: ${chain}. Supported: ${Object.keys(SUPPORTED_CHAINS).join(", ")}`
+				);
+			}
+			configService.resetRpcUrl(chain);
+			return { action, chain, url: SUPPORTED_CHAINS[chain]?.rpcUrl };
+		}
+		configService.resetAll();
+		return { action, rpcUrls: {} };
 	}
 
 	if (!chain) throw new Error("Chain is required for this action.");

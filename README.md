@@ -134,6 +134,8 @@ Set custom RPC URLs to avoid rate limits on public endpoints:
 ```bash
 npx fibx config set-rpc base https://mainnet.base.org
 npx fibx config get-rpc base
+npx fibx config reset-rpc base   # Reset single chain to default
+npx fibx config reset-rpc        # Reset all chains to default
 npx fibx config list
 ```
 

@@ -70,6 +70,16 @@ export class ConfigService {
 		this.save(config);
 	}
 
+	public resetRpcUrl(chain: string): void {
+		const config = this.load();
+		delete config.rpcUrls[chain];
+		this.save(config);
+	}
+
+	public resetAll(): void {
+		this.save({ rpcUrls: {} });
+	}
+
 	public getConfig(): Config {
 		return this.load();
 	}

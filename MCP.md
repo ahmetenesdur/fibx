@@ -171,11 +171,11 @@ Output: { action, amount, token, txHash, chain }
 Manage custom RPC URLs. Useful when encountering rate limits on public endpoints.
 
 ```
-Input:  { action: "set-rpc" | "get-rpc" | "list", chain?, url? }
+Input:  { action: "set-rpc" | "get-rpc" | "reset-rpc" | "list", chain?, url? }
 Output: { action, chain?, url?, rpcUrls? }
 ```
 
-**Example prompt:** "I'm getting rate limited on Base, set a custom RPC"
+**Example prompt:** "I'm getting rate limited on Base, set a custom RPC" or "Reset all RPCs to default"
 
 ## Supported Chains
 

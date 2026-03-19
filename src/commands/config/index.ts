@@ -69,4 +69,40 @@ export function registerConfigCommands(program: Command) {
 			}
 			console.log("");
 		});
+
+	configCmd
+		.command("reset-rpc")
+		.description("Reset custom RPC URL(s) to default")
+		.argument("[chain]", "Chain name (omit to reset all)")
+		.action((chain?: string) => {
+			if (chain) {
+				if (!SUPPORTED_CHAINS[chain]) {
+					console.error(chalk.red(`Unsupported chain: ${chain}`));
+					console.log(
+						chalk.gray(`Supported chains: ${Object.keys(SUPPORTED_CHAINS).join(", ")}`)
+					);
+					process.exit(1);
+				}
+
+				const currentUrl = configService.getRpcUrl(chain);
+				if (!currentUrl) {
+					console.log(
+						chalk.yellow(`No custom RPC set for ${chain}. Already using default.`)
+					);
+					return;
+				}
+
+				configService.resetRpcUrl(chain);
+				console.log(chalk.green(`Reset RPC for ${chain} to default.`));
+			} else {
+				const config = configService.getConfig();
+				if (Object.keys(config.rpcUrls).length === 0) {
+					console.log(chalk.yellow("No custom RPCs set. Already using defaults."));
+					return;
+				}
+
+				configService.resetAll();
+				console.log(chalk.green("All custom RPC URLs have been reset to defaults."));
+			}
+		});
 }
