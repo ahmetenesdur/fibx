@@ -1,4 +1,10 @@
-import { createSpinner, outputResult, formatError, warn, type OutputOptions } from "../../lib/format.js";
+import {
+	createSpinner,
+	outputResult,
+	formatError,
+	warn,
+	type OutputOptions,
+} from "../../lib/format.js";
 import { saveSession } from "../../services/auth/session.js";
 import { privateKeyToAccount } from "viem/accounts";
 import { type Hex } from "viem";

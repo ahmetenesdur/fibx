@@ -1,24 +1,23 @@
 import { apiLogin } from "../../services/api/client.js";
-import { createSpinner, outputResult, formatError, type OutputOptions } from "../../lib/format.js";
+import { outputResult, type OutputOptions } from "../../lib/format.js";
+import { runCommand } from "../../lib/cli-helpers.js";
 
 export async function authLoginCommand(email: string, opts: OutputOptions): Promise<void> {
-	const spinner = createSpinner("Sending OTP...").start();
-
-	try {
-		await apiLogin(email);
-
-		spinner.succeed("OTP sent");
-
-		outputResult(
-			{
-				email,
-				message: `OTP sent to ${email}. Run: fibx auth verify ${email} <code>`,
-			},
-			opts
-		);
-	} catch (error) {
-		spinner.fail("Failed to send OTP");
-		console.error(formatError(error));
-		process.exitCode = 1;
-	}
+	await runCommand(
+		"Sending OTP...",
+		"OTP sent",
+		"Failed to send OTP",
+		async () => {
+			await apiLogin(email);
+			return { email };
+		},
+		(data) =>
+			outputResult(
+				{
+					email: data.email,
+					message: `OTP sent to ${email}. Run: fibx auth verify ${email} <code>`,
+				},
+				opts
+			)
+	);
 }

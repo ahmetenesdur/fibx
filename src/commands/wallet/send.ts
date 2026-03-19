@@ -1,4 +1,4 @@
-import type { Address } from "viem";
+import { formatUnits, type Address } from "viem";
 import { requireSession } from "../../services/auth/session.js";
 import { getWalletClient, getPublicClient } from "../../services/chain/client.js";
 import { getChainConfig } from "../../services/chain/constants.js";
@@ -14,11 +14,15 @@ import {
 	type GlobalOptions,
 } from "../../lib/format.js";
 
+interface SendOptions extends OutputOptions {
+	simulate?: boolean;
+}
+
 export async function sendCommand(
 	amount: string,
 	recipient: string,
 	tokenSymbol: string,
-	opts: OutputOptions
+	opts: SendOptions
 ): Promise<void> {
 	const spinner = createSpinner("Preparing transfer...").start();
 
@@ -46,12 +50,31 @@ export async function sendCommand(
 			spinner.text = `Sending ${amount} ${resolvedSymbol} on ${chain.name}...`;
 
 			try {
-				await publicClient.estimateGas({
+				const gasEstimate = await publicClient.estimateGas({
 					account: wallet,
 					to: recipient as Address,
 					value: amountBigInt,
 					data: undefined,
 				});
+
+				if (opts.simulate) {
+					const gasPrice = await publicClient.getGasPrice();
+					const feeWei = gasEstimate * gasPrice;
+					const feeEth = formatUnits(feeWei, 18);
+
+					spinner.succeed("Simulation complete");
+					outputResult(
+						{
+							mode: "SIMULATION (no TX sent)",
+							amount: `${amount} ${resolvedSymbol}`,
+							recipient,
+							estimatedGas: `${feeEth} ${chain.nativeSymbol}`,
+							chain: chain.name,
+						},
+						opts
+					);
+					return;
+				}
 			} catch (error) {
 				spinner.fail("Simulation failed");
 				throw new Error(
@@ -78,6 +101,32 @@ export async function sendCommand(
 				args: [recipient as Address, amountBigInt],
 				account: wallet,
 			});
+
+			if (opts.simulate) {
+				const gasPrice = await publicClient.getGasPrice();
+				const gasEstimate = await publicClient.estimateContractGas({
+					address: token.address as Address,
+					abi: ERC20_ABI,
+					functionName: "transfer",
+					args: [recipient as Address, amountBigInt],
+					account: wallet,
+				});
+				const feeWei = gasEstimate * gasPrice;
+				const feeEth = formatUnits(feeWei, 18);
+
+				spinner.succeed("Simulation complete");
+				outputResult(
+					{
+						mode: "SIMULATION (no TX sent)",
+						amount: `${amount} ${token.symbol}`,
+						recipient,
+						estimatedGas: `${feeEth} ${chain.nativeSymbol}`,
+						chain: chain.name,
+					},
+					opts
+				);
+				return;
+			}
 
 			txHash = await walletClient.writeContract(request);
 		}

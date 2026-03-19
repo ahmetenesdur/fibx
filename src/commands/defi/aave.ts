@@ -7,20 +7,16 @@ import {
 	HEALTH_FACTOR_WARNING_THRESHOLD,
 	HEALTH_FACTOR_CRITICAL_THRESHOLD,
 } from "../../services/defi/constants.js";
-import {
-	createSpinner,
-	outputResult,
-	formatResult,
-	formatError,
-} from "../../lib/format.js";
+import { createSpinner, outputResult, formatResult, formatError } from "../../lib/format.js";
 import { MINT } from "../../lib/brand.js";
 
 interface GlobalOptions {
 	json?: boolean;
 	chain?: string;
+	simulate?: boolean;
 }
 
-type AaveAction = "status" | "supply" | "borrow" | "repay" | "withdraw";
+type AaveAction = "status" | "supply" | "borrow" | "repay" | "withdraw" | "markets";
 
 export const aaveCommand = async (
 	action: string,
@@ -42,24 +38,34 @@ export const aaveCommand = async (
 		}
 
 		const userAddress = aave.getAccountAddress();
-		if (!userAddress) {
-			if (action === "status") {
+
+		if (action === "status") {
+			if (!userAddress) {
 				spinner.fail("No wallet connected. Run `fibx auth login` or `fibx auth import`.");
-			} else {
-				spinner.fail("No active session found. Please login or import a private key.");
+				process.exitCode = 1;
+				return;
 			}
-			process.exitCode = 1;
+			await handleStatus(aave, userAddress, opts, spinner);
 			return;
 		}
 
-		if (action === "status") {
-			await handleStatus(aave, userAddress, opts, spinner);
+		if (action === "markets") {
+			await handleMarkets(aave, opts, spinner);
+			return;
+		}
+
+		// Write operations require an active wallet session
+		if (!userAddress) {
+			spinner.fail("No active session found. Please login or import a private key.");
+			process.exitCode = 1;
 			return;
 		}
 
 		if (!isValidAction(action)) {
 			spinner.fail(`Unknown action: ${action}`);
-			console.log(chalk.gray("Available actions: status, supply, borrow, repay, withdraw"));
+			console.log(
+				chalk.gray("Available actions: status, markets, supply, borrow, repay, withdraw")
+			);
 			process.exitCode = 1;
 			return;
 		}
@@ -91,13 +97,7 @@ export const aaveCommand = async (
 
 		switch (action) {
 			case "supply":
-				await handleSupply(
-					aave,
-					token,
-					amount,
-					spinner,
-					opts
-				);
+				await handleSupply(aave, token, amount, spinner, opts);
 				break;
 			case "borrow":
 				await handleBorrow(aave, token, amount, spinner, opts);
@@ -124,7 +124,13 @@ export const aaveCommand = async (
 };
 
 function isValidAction(action: string): action is AaveAction {
-	return ["status", "supply", "borrow", "repay", "withdraw"].includes(action);
+	return ["status", "markets", "supply", "borrow", "repay", "withdraw"].includes(action);
+}
+
+function getExplorerLink(txHash: string): string | undefined {
+	const chain = getChainConfig("base");
+	const baseUrl = chain.viemChain.blockExplorers?.default.url;
+	return baseUrl ? `${baseUrl}/tx/${txHash}` : undefined;
 }
 
 async function attemptSessionLogin(aave: AaveService, chainConfig: ChainConfig) {
@@ -175,6 +181,63 @@ async function handleStatus(
 	console.log();
 }
 
+// Format large numbers compactly
+const fmtNum = (s: string): string => {
+	const n = parseFloat(s);
+	if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(2)}M`;
+	if (n >= 1_000) return `${(n / 1_000).toFixed(2)}K`;
+	return n.toFixed(2);
+};
+
+async function handleMarkets(
+	aave: AaveService,
+	opts: GlobalOptions,
+	spinner: ReturnType<typeof createSpinner>
+) {
+	spinner.text = "Fetching Aave V3 markets...";
+	const markets = await aave.getMarkets();
+	spinner.succeed(`Found ${markets.length} active markets`);
+
+	if (opts.json) {
+		outputResult(markets as unknown as Record<string, unknown>, { json: true });
+		return;
+	}
+
+	console.log(chalk.bold.hex(MINT)("\n  Aave V3 Markets on Base\n"));
+
+	// Table header
+	const header = [
+		"Token".padEnd(10),
+		"Supply APY".padEnd(12),
+		"Borrow APY".padEnd(12),
+		"Total Supply".padEnd(18),
+		"Total Borrow".padEnd(18),
+		"LTV".padEnd(8),
+	].join("  ");
+	console.log(chalk.dim(`  ${header}`));
+	console.log(chalk.dim(`  ${"─".repeat(header.length)}`));
+
+	for (const m of markets) {
+		const frozen = m.isFrozen ? chalk.yellow(" ❄") : "";
+		const supplyColor = chalk.green;
+		const borrowVal = parseFloat(m.borrowAPY);
+		const borrowColor = borrowVal > 10 ? chalk.red : borrowVal > 5 ? chalk.yellow : chalk.white;
+
+		const row = [
+			chalk.white.bold(m.symbol.padEnd(10)),
+			supplyColor(m.supplyAPY.padEnd(12)),
+			borrowColor(m.borrowAPY.padEnd(12)),
+			chalk.dim(fmtNum(m.totalSupply).padEnd(18)),
+			chalk.dim(fmtNum(m.totalBorrow).padEnd(18)),
+			chalk.white(m.ltv.padEnd(8)),
+		].join("  ");
+
+		console.log(`  ${row}${frozen}`);
+	}
+
+	console.log();
+}
+
 async function handleSupply(
 	aave: AaveService,
 	token: Token,
@@ -188,12 +251,14 @@ async function handleSupply(
 
 	spinner.succeed("Supply confirmed");
 
+	const explorer = getExplorerLink(txHash);
 	outputResult(
 		{
 			action: "Supply",
 			amount,
 			token: token.symbol,
 			txHash,
+			...(explorer ? { explorer } : {}),
 			chain: "base",
 		},
 		{ json: !!opts.json }
@@ -211,12 +276,14 @@ async function handleBorrow(
 	const tx = await aave.borrow(token.address as Address, amount);
 	spinner.succeed("Borrow confirmed");
 
+	const explorer = getExplorerLink(tx);
 	outputResult(
 		{
 			action: "Borrow",
 			amount,
 			token: token.symbol,
 			txHash: tx,
+			...(explorer ? { explorer } : {}),
 			chain: "base",
 		},
 		{ json: !!opts.json }
@@ -236,12 +303,14 @@ async function handleRepay(
 
 	spinner.succeed("Repay confirmed");
 
+	const explorer = getExplorerLink(txHash);
 	outputResult(
 		{
 			action: "Repay",
 			amount: amount === "-1" || amount.toLowerCase() === "max" ? "MAX" : amount,
 			token: token.symbol,
 			txHash,
+			...(explorer ? { explorer } : {}),
 			chain: "base",
 		},
 		{ json: !!opts.json }
@@ -267,12 +336,14 @@ async function handleWithdraw(
 
 	spinner.succeed("Withdraw confirmed");
 
+	const explorer = getExplorerLink(txHash);
 	outputResult(
 		{
 			action: "Withdraw",
 			amount,
 			token: isNativeETH ? "ETH (unwrapped)" : token.symbol,
 			txHash,
+			...(explorer ? { explorer } : {}),
 			chain: "base",
 		},
 		{ json: !!opts.json }

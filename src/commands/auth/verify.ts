@@ -23,11 +23,7 @@ export async function authVerifyCommand(
 			type: "privy",
 		});
 
-		spinner.succeed(
-			result.isExisting
-				? "Existing wallet connected"
-				: "New wallet created"
-		);
+		spinner.succeed(result.isExisting ? "Existing wallet connected" : "New wallet created");
 
 		outputResult(
 			{

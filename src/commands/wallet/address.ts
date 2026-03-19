@@ -1,19 +1,19 @@
 import { requireSession } from "../../services/auth/session.js";
-import { outputResult, formatError, type OutputOptions } from "../../lib/format.js";
+import { outputResult, type OutputOptions } from "../../lib/format.js";
+import { runCommand } from "../../lib/cli-helpers.js";
 
 export async function addressCommand(opts: OutputOptions): Promise<void> {
-	try {
-		const session = requireSession();
-
-		outputResult(
-			{
+	await runCommand(
+		"Loading wallet...",
+		"Wallet loaded",
+		"Failed to load wallet",
+		async () => {
+			const session = requireSession();
+			return {
 				address: session.walletAddress,
 				walletId: session.walletId ?? "N/A",
-			},
-			opts
-		);
-	} catch (error) {
-		console.error(formatError(error));
-		process.exitCode = 1;
-	}
+			};
+		},
+		(data) => outputResult(data, opts)
+	);
 }

@@ -1,4 +1,5 @@
 import type { Address } from "viem";
+import { formatUnits, maxUint256 } from "viem";
 import { requireSession } from "../../services/auth/session.js";
 import { getWalletClient, getPublicClient } from "../../services/chain/client.js";
 import { getChainConfig } from "../../services/chain/constants.js";
@@ -25,6 +26,7 @@ import {
 interface TradeOptions extends OutputOptions {
 	slippage: number;
 	approveMax?: boolean;
+	simulate?: boolean;
 }
 
 export async function tradeCommand(
@@ -64,6 +66,31 @@ export async function tradeCommand(
 			tokenOut.address.toLowerCase() === chain.wrappedNativeAddress.toLowerCase();
 
 		if (isNativeInput && isWrappedOutput) {
+			if (opts.simulate) {
+				const gasEstimate = await publicClient.estimateGas({
+					account: wallet,
+					to: chain.wrappedNativeAddress as Address,
+					data: encodeDeposit(),
+					value: amountBaseUnits,
+				});
+				const gasPrice = await publicClient.getGasPrice();
+				const feeEth = formatUnits(gasEstimate * gasPrice, 18);
+
+				spinner.succeed("Simulation complete");
+				outputResult(
+					{
+						mode: "SIMULATION (no TX sent)",
+						action: "Wrap",
+						input: `${amount} ${tokenIn.symbol}`,
+						output: `${amount} ${tokenOut.symbol}`,
+						estimatedGas: `${feeEth} ${chain.nativeSymbol}`,
+						chain: chain.name,
+					},
+					opts
+				);
+				return;
+			}
+
 			spinner.text = `Wrapping ${amount} ${tokenIn.symbol} → ${tokenOut.symbol}...`;
 			const hash = await walletClient.sendTransaction({
 				to: chain.wrappedNativeAddress as Address,
@@ -91,6 +118,31 @@ export async function tradeCommand(
 		}
 
 		if (isWrappedInput && isNativeOutput) {
+			if (opts.simulate) {
+				const gasEstimate = await publicClient.estimateGas({
+					account: wallet,
+					to: chain.wrappedNativeAddress as Address,
+					data: encodeWithdraw(amountBaseUnits),
+					value: 0n,
+				});
+				const gasPrice = await publicClient.getGasPrice();
+				const feeEth = formatUnits(gasEstimate * gasPrice, 18);
+
+				spinner.succeed("Simulation complete");
+				outputResult(
+					{
+						mode: "SIMULATION (no TX sent)",
+						action: "Unwrap",
+						input: `${amount} ${tokenIn.symbol}`,
+						output: `${amount} ${tokenOut.symbol}`,
+						estimatedGas: `${feeEth} ${chain.nativeSymbol}`,
+						chain: chain.name,
+					},
+					opts
+				);
+				return;
+			}
+
 			spinner.text = `Unwrapping ${amount} ${tokenIn.symbol} → ${tokenOut.symbol}...`;
 			const hash = await walletClient.sendTransaction({
 				to: chain.wrappedNativeAddress as Address,
@@ -151,9 +203,7 @@ export async function tradeCommand(
 
 			if (currentAllowance < amountBaseUnits) {
 				const approveSpinner = createSpinner("Approving token spend...").start();
-				const amountToApprove = opts.approveMax
-					? 115792089237316195423570985008687907853269984665640564039457584007913129639935n
-					: amountBaseUnits;
+				const amountToApprove = opts.approveMax ? maxUint256 : amountBaseUnits;
 				const approveData = encodeApprove(routerAddress, amountToApprove);
 				const approveTxHash = await walletClient.sendTransaction({
 					to: tokenIn.address as Address,
@@ -186,12 +236,32 @@ export async function tradeCommand(
 		const value = isNativeInput ? amountBaseUnits : 0n;
 
 		try {
-			await publicClient.estimateGas({
+			const gasEstimate = await publicClient.estimateGas({
 				account: wallet,
 				to: routerAddress,
 				data: swapData,
 				value: value,
 			});
+
+			if (opts.simulate) {
+				const gasPrice = await publicClient.getGasPrice();
+				const feeWei = gasEstimate * gasPrice;
+				const feeEth = formatUnits(feeWei, 18);
+
+				swapSpinner.succeed("Simulation complete");
+				outputResult(
+					{
+						mode: "SIMULATION (no TX sent)",
+						input: `${amount} ${tokenIn.symbol}`,
+						output: `~${outputAmount} ${tokenOut.symbol}`,
+						estimatedGas: `${feeEth} ${chain.nativeSymbol}`,
+						router: routerAddress,
+						chain: chain.name,
+					},
+					opts
+				);
+				return;
+			}
 		} catch (error) {
 			swapSpinner.fail("Simulation failed");
 			throw new Error(

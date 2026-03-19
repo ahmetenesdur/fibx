@@ -92,9 +92,7 @@ export function registerConfigCommands(program: Command) {
 
 				const currentUrl = configService.getRpcUrl(chain);
 				if (!currentUrl) {
-					console.log(
-						warn(`No custom RPC set for ${chain}. Already using default.`)
-					);
+					console.log(warn(`No custom RPC set for ${chain}. Already using default.`));
 					return;
 				}
 
