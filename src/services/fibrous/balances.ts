@@ -2,6 +2,7 @@ import type { ChainConfig } from "../chain/constants.js";
 import { FIBROUS_GRAPH_URL } from "../../lib/config.js";
 import { ErrorCode, FibxError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
+import { fetchWithTimeout } from "../../lib/fetch.js";
 
 interface TokenInput {
 	address: string;
@@ -31,11 +32,14 @@ export async function getBalances(
 
 		const data = await withRetry(
 			async () => {
-				const res = await fetch(`${FIBROUS_GRAPH_URL}/${chain.fibrousNetwork}/balances`, {
-					method: "POST",
-					headers: { "Content-Type": "application/json" },
-					body: JSON.stringify(payload),
-				});
+				const res = await fetchWithTimeout(
+					`${FIBROUS_GRAPH_URL}/${chain.fibrousNetwork}/balances`,
+					{
+						method: "POST",
+						headers: { "Content-Type": "application/json" },
+						body: JSON.stringify(payload),
+					}
+				);
 
 				if (!res.ok) {
 					throw new Error(`HTTP ${res.status} ${res.statusText}`);

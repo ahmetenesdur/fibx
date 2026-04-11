@@ -1,6 +1,7 @@
 import { FIBROUS_BASE_URL } from "../../lib/config.js";
 import type { ChainConfig } from "../chain/constants.js";
 import { ErrorCode, FibxError } from "../../lib/errors.js";
+import { fetchWithTimeout } from "../../lib/fetch.js";
 
 interface HealthResponse {
 	status: number;
@@ -14,7 +15,7 @@ interface HealthResponse {
 export async function checkHealth(chain: ChainConfig): Promise<HealthResponse> {
 	try {
 		const url = `${FIBROUS_BASE_URL}/${chain.fibrousNetwork}/v2/healthcheck`;
-		const res = await fetch(url);
+		const res = await fetchWithTimeout(url, { timeoutMs: 10_000 });
 
 		if (!res.ok) {
 			throw new Error(`HTTP ${res.status}`);

@@ -4,6 +4,7 @@ import { FIBROUS_BASE_URL, DEFAULT_SLIPPAGE } from "../../lib/config.js";
 import type { ChainConfig } from "../chain/constants.js";
 import { ErrorCode, FibxError } from "../../lib/errors.js";
 import { withRetry } from "../../lib/retry.js";
+import { fetchWithTimeout } from "../../lib/fetch.js";
 
 export interface RouteToken {
 	name: string;
@@ -69,7 +70,7 @@ export async function getRouteAndCallData(
 	try {
 		const data = await withRetry(
 			async () => {
-				const res = await fetch(url.toString());
+				const res = await fetchWithTimeout(url.toString());
 
 				if (!res.ok) {
 					const body = await res.text().catch(() => "");
