@@ -18,8 +18,12 @@ import { aaveCommand } from "./commands/defi/aave.js";
 import { registerConfigCommands } from "./commands/config/index.js";
 import { logoutCommand } from "./commands/auth/logout.js";
 
-const require = createRequire(import.meta.url);
-const { version } = require("../package.json") as { version: string };
+declare const FIBX_VERSION: string;
+
+const version =
+	typeof FIBX_VERSION !== "undefined"
+		? FIBX_VERSION
+		: (createRequire(import.meta.url)("../package.json") as { version: string }).version;
 
 process.on("SIGINT", () => process.exit(0));
 process.on("SIGTERM", () => process.exit(0));

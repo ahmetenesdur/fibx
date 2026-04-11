@@ -25,14 +25,16 @@ export function registerConfigCommands(program: Command) {
 				console.log(
 					chalk.gray(`Supported chains: ${Object.keys(SUPPORTED_CHAINS).join(", ")}`)
 				);
-				process.exit(1);
+				process.exitCode = 1;
+				return;
 			}
 
 			try {
 				new URL(url); // Validate URL format
 			} catch {
 				console.error(formatError(new Error("Invalid URL format.")));
-				process.exit(1);
+				process.exitCode = 1;
+				return;
 			}
 
 			configService.setRpcUrl(chain, url);
@@ -49,7 +51,8 @@ export function registerConfigCommands(program: Command) {
 
 			if (!defaultUrl) {
 				console.error(formatError(new Error(`Unsupported chain: ${chain}`)));
-				process.exit(1);
+				process.exitCode = 1;
+				return;
 			}
 
 			if (customUrl) {
@@ -87,7 +90,8 @@ export function registerConfigCommands(program: Command) {
 					console.log(
 						chalk.gray(`Supported chains: ${Object.keys(SUPPORTED_CHAINS).join(", ")}`)
 					);
-					process.exit(1);
+					process.exitCode = 1;
+					return;
 				}
 
 				const currentUrl = configService.getRpcUrl(chain);
