@@ -14,6 +14,7 @@ const pkg = {
 };
 
 const MCP_INSTRUCTIONS = `fibx is a multi-chain EVM DeFi toolkit for Base, Citrea, HyperEVM, and Monad. You can:
+- Get price quotes without authentication (get_quote — no wallet needed)
 - Check auth status and configure custom RPC URLs per chain
 - Query native and ERC-20 token balances on any supported chain
 - View cross-chain portfolio with USD values and Aave V3 DeFi positions
@@ -23,15 +24,16 @@ const MCP_INSTRUCTIONS = `fibx is a multi-chain EVM DeFi toolkit for Base, Citre
 - Monitor Aave V3 health factors and market rates (APY, TVL, LTV)
 
 RULES:
-1. Always call get_auth_status before wallet operations.
-2. For swaps, swap_tokens handles approvals and wrap/unwrap automatically.
-3. Aave V3 is ONLY available on Base — do NOT attempt Aave operations on other chains.
-4. Use "max" as amount for full repay/withdraw on Aave.
-5. Config tool manages custom RPC URLs to avoid rate limits.
-6. All write tools are destructive — confirm with the user before executing.
-7. Use simulate=true on transactional tools to preview fees before execution.
-8. Always call get_aave_markets before Aave supply/borrow operations.
-9. get_portfolio provides cross-chain overview including DeFi positions.`;
+1. get_quote does NOT require authentication — use it for price checks and rate discovery.
+2. Always call get_auth_status before wallet/transactional operations.
+3. For swaps, swap_tokens handles approvals and wrap/unwrap automatically.
+4. Aave V3 is ONLY available on Base — do NOT attempt Aave operations on other chains.
+5. Use "max" as amount for full repay/withdraw on Aave.
+6. Config tool manages custom RPC URLs to avoid rate limits.
+7. All write tools are destructive — confirm with the user before executing.
+8. Use simulate=true on transactional tools to preview fees before execution.
+9. Always call get_aave_markets before Aave supply/borrow operations.
+10. get_portfolio provides cross-chain overview including DeFi positions.`;
 
 function printBanner(summary: ToolSummary): void {
 	const version = pkg.version;
