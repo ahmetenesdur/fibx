@@ -69,18 +69,19 @@ Add to `~/.gemini/antigravity/mcp_config.json`:
 
 > **Important:** You must be authenticated (`fibx auth login` or `fibx auth import`) before the MCP server can execute wallet operations.
 
-## Available Tools (10)
+## Available Tools (11)
 
-### Read-Only (6 tools)
+### Read-Only (7 tools)
 
-| Tool               | Description                                                  |
-| ------------------ | ------------------------------------------------------------ |
-| `get_auth_status`  | Check session and Fibrous API health                         |
-| `get_balance`      | Get native and ERC-20 token balances                         |
-| `get_portfolio`    | Cross-chain portfolio with USD valuations and DeFi positions |
-| `get_tx_status`    | Check transaction receipt and status                         |
-| `get_aave_status`  | Get Aave V3 position health on Base                          |
-| `get_aave_markets` | List all Aave V3 reserves with APY, TVL, and LTV             |
+| Tool               | Description                                                  | Auth Required |
+| ------------------ | ------------------------------------------------------------ | ------------- |
+| `get_quote`        | Get swap price quote, exchange rate, and route info          | No            |
+| `get_auth_status`  | Check session and Fibrous API health                         | No            |
+| `get_balance`      | Get native and ERC-20 token balances                         | Yes           |
+| `get_portfolio`    | Cross-chain portfolio with USD valuations and DeFi positions | Yes           |
+| `get_tx_status`    | Check transaction receipt and status                         | No            |
+| `get_aave_status`  | Get Aave V3 position health on Base                          | Yes           |
+| `get_aave_markets` | List all Aave V3 reserves with APY, TVL, and LTV             | No            |
 
 ### Transactional (3 tools)
 
@@ -99,6 +100,15 @@ These tools are marked as **destructive** — the AI editor will ask for confirm
 | `config_action` | Set or view custom RPC URLs to avoid rate limits |
 
 ## Tool Details
+
+### get_quote
+
+Get a price quote for a token swap. **No authentication required** — use this to check prices before setting up a wallet.
+
+```
+Input:  { amount, from_token, to_token, chain?, slippage? }
+Output: { input, output, rate, slippage, router, chain }
+```
 
 ### get_auth_status
 

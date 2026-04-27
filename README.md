@@ -11,7 +11,7 @@ A command-line tool for DeFi operations on **Base, Citrea, HyperEVM, and Monad**
 - **Token Swaps**: Optimal routing via Fibrous aggregation with auto-slippage
 - **Transfers**: Send ETH or any ERC-20 token
 - **Aave V3**: Supply, borrow, repay, withdraw, and browse markets on Base
-- **MCP Server**: Built-in AI agent integration for Cursor, Claude Desktop, and Antigravity (10 tools, 4 categories)
+- **MCP Server**: Built-in AI agent integration for Cursor, Claude Desktop, and Antigravity (11 tools, 4 categories)
 - **Agent Skills**: Prompt-based AI skills via [fibx-skills](https://github.com/Fibrous-Finance/fibx-skills)
 - **Privy Server Wallets**: Secure server-side signing — private keys never leave Privy's TEE
 - **Private Key Import**: Use an existing wallet with AES-256-GCM encrypted local storage
@@ -47,6 +47,42 @@ npm install -g fibx
 
 - Node.js >= 18
 - A running [fibx-server](https://github.com/ahmetenesdur/fibx-server) instance (required for Privy wallet operations; not needed for private key imports)
+
+## Quick Start — First Swap in 3 Minutes
+
+### Step 1: Get a Price Quote (no auth needed)
+
+Try FibX instantly — no sign-up, no wallet, no keys:
+
+```bash
+npx fibx quote 0.01 ETH USDC              # Check price on Base
+npx fibx quote 100 USDC DAI --chain base   # Compare pairs
+npx fibx quote 0.5 MON USDC --chain monad  # Check Monad prices
+```
+
+### Step 2: Authenticate (pick one)
+
+**Option A — Email Login** (Privy Server Wallet, no keys to manage):
+
+```bash
+npx fibx auth login you@email.com          # Sends OTP to your email
+npx fibx auth verify you@email.com 123456  # Verify & create wallet
+```
+
+**Option B — Import Private Key** (use an existing wallet):
+
+```bash
+npx fibx auth import                       # Paste your key (encrypted at rest)
+```
+
+### Step 3: Execute
+
+```bash
+npx fibx trade 0.01 ETH USDC               # Execute the swap
+npx fibx balance                            # Check your balances
+```
+
+That's it. Three steps from zero to first swap.
 
 ## Usage
 
@@ -102,6 +138,18 @@ npx fibx send 10 0xRecipient USDC         # Send ERC-20 on Base
 npx fibx send 1 0xRecipient --chain monad # Send MON on Monad
 npx fibx send 0.1 0xRecipient --simulate  # Estimate gas without sending
 ```
+
+### Quote
+
+Get swap prices without authentication:
+
+```bash
+npx fibx quote 0.01 ETH USDC                  # Price check on Base
+npx fibx quote 100 USDC DAI --chain monad      # Compare pairs
+npx fibx quote 0.1 ETH USDC --json             # JSON output for scripts
+```
+
+> **No wallet or authentication required.** Use `quote` to explore prices, then `trade` to execute.
 
 ### Swap
 
@@ -171,7 +219,7 @@ fibx includes a built-in [MCP](https://modelcontextprotocol.io) server for AI ed
 npx fibx mcp-start
 ```
 
-The MCP server exposes **10 tools** across 4 categories (Auth & Config, Wallet & Portfolio, Trading, DeFi). All write operations support a `simulate=true` parameter for fee estimation without execution.
+The MCP server exposes **11 tools** across 4 categories (Auth & Config, Wallet & Portfolio, Trading, DeFi). All write operations support a `simulate=true` parameter for fee estimation without execution.
 
 ### Agent Skills
 
